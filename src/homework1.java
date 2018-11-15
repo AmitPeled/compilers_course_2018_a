@@ -176,6 +176,12 @@ class homework1 {
             	//TODO
             }
             else {
+            	//primitives & pointers
+            	
+            	//pointers are regular variables in matters of attributes and memory
+            	//we assumed we don't matter about what it points to so pointer is just regular int
+            	//which symbolises address
+            	
             	size = 1;
             	var = new Variable(id, type, ADR++, size);
             }
@@ -203,10 +209,19 @@ class homework1 {
     private static void codel(AST statements) {
     	if(statements.value.equals("identifier"))
     		System.out.println("ldc " + SymbolTable.varById(statements.left.value).address);
+    	else if(statements.value.equals("pointer")) {
+    		// operator^ (* in c++)
+    		codel(statements.left);
+    		System.out.println("ind");
+    	}
     }
     
     private static void coder(AST statements) {
     	if(statements.value.equals("identifier")){
+    		codel(statements);
+    		System.out.println("ind");
+    	}
+    	if(statements.value.equals("pointer")){
     		codel(statements);
     		System.out.println("ind");
     	}
