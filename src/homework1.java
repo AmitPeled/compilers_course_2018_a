@@ -161,7 +161,7 @@ class homework1 {
         	inputHandling(declarations.left);
         	
         	
-        	int hash_entrance, size;
+        	int hash_entrance, size = 1;
             String id,type;
             Variable var = null;
             
@@ -183,7 +183,7 @@ class homework1 {
             hashTable.elementAt(hash_entrance).addLast(var);
              	
             return size;
-             
+            
         	
         }
         
