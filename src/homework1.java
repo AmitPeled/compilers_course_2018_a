@@ -1,6 +1,8 @@
 import java.util.Scanner;
 import java.util.Vector;
 
+import javax.lang.model.element.Element;
+
 import homework1.SymbolTable;
 
 import java.util.LinkedList;
@@ -64,9 +66,46 @@ class homework1 {
     	int dim; //number of dimensions
     	int[] d_size; //size of each dimension
     	int subpart; // constant to each array
-    	public VariableArray(String name,String type,int address, int size){
+
+    	public VariableArray(String name,String type,int address, int size, int g, int dim, int[] d_size,
+    			AST rangeList){
     		super(name, type, address, size);
+    		this.g = g;
+    		this.dim = dim;
+    		this.d_size = d_size; //the array was created in inputHandling. no need for deep copying
     		
+    		this.subpart = calcSubpart(rangeList, dim - 1);
+    		
+    	}
+    	
+    	public int calcSubpart(AST rangeList, int i) {
+    		if(rangeList == null)
+    			return 0;
+    		int prev = calcSubpart(rangeList.left, i-1);
+    		
+    		
+    		int current = 0;
+    		
+    		/*
+    		 * example: array A[3..5, 0..4, 0..2] of __ (typesize=g)
+    		 * 
+    		 * current(i=0) = leftRange * multi = 3 * (5*3*g)
+    		 * current(i=1) = leftRange * multi = 0 * (3*g)
+    		 * current(i=2) = leftRange * multi = 0 * (g)
+    		 * 
+    		 * subpart = current(i=0) + current(i=1) + current(i=2)
+    		 */
+    		
+    		AST range = rangeList.right;
+    		int leftRange = Integer.parseInt(range.left.left.value);
+    		//calc number of elements the left range represents
+    		int multi = this.g;
+    		for(int j=i+1; i<this.dim; j++) {
+    			multi *= this.d_size[j];
+    		}
+    		current = leftRange * multi;
+    		
+    		return prev + current; //return the sum of all previous including himself
     	}
     	
     	
@@ -156,6 +195,23 @@ class homework1 {
         	return null;
         }
         
+        public static void array_dims(AST rangeList, int[] array_dims, int i) {
+        	//sets a given array of size of dimensions with rangeLists
+        	//goes from last to first 
+        	if(rangeList == null)
+        		return;
+        	array_dims(rangeList.left, array_dims, i-1);
+        	
+        	AST range = rangeList.right;
+        	int rangeRight = Integer.parseInt(range.right.left.value);
+        	int rangeLeft = Integer.parseInt(range.left.left.value);
+        	int rangeSize = rangeRight - rangeLeft + 1;
+        	array_dims[i] = rangeSize;
+        	
+        	return;
+        	
+        }
+        
         private static int inputHandling(AST declarations) {
         	//coded - reads the declaration and add the new variable to the hashTable
         	//returns size of all the variables before it (for records)
@@ -164,7 +220,7 @@ class homework1 {
         	inputHandling(declarations.left);
         	
         	
-        	int hash_entrance, size = 1;
+        	int hash_entrance, size = 1, address;
             String id,type;
             Variable var = null;
             
@@ -173,18 +229,54 @@ class homework1 {
             type = declarations.right.right.value;
             
             if(type.equals("array")) {
-            	//TODO
+            	//TODO: prepare attributes for variableArray and call the constructor
+            	int g = typesize(type); //size of the array's elements.
+            	int dims_count = 0; //number of dimensions
+            	int[] array_dims;
+            	//count number of dimensions
+            	AST rangeList = declarations.right.right.left; //first rangeList
+            	while (rangeList != null){
+            		dims_count++;
+            		rangeList = rangeList.left;
+            	}
+            	array_dims = new int[dims_count];
+            	rangeList = declarations.right.right.left; //reset to first rangeList
+            	array_dims(rangeList, array_dims, dims_count - 1); //from last to first
+            	
+            	//count number of elements
+            	//multiplication of all dims_sizes
+            	size = 1;
+            	for(int i=0; i<dims_count; i++){
+            		size *= array_dims[i];
+            	}
+            	size *= g; //(number of elements * element's size)
+            	address  = ADR;
+            	ADR += size;
+            	
+            	
+            	//subpart attribute is calculated with rangeList
+            	var = new VariableArray(id, type, address, size, g, dims_count, array_dims, rangeList);
+            	hash_entrance = hashFunction(id);
+                hashTable.elementAt(hash_entrance).addLast(var);
+            	
             }
             else if(type.equals("record")){
             	//TODO
             }
             else {
+            	//primitives & pointers
+            	
+            	//pointers are regular variables in matters of attributes and memory
+            	//we assumed we don't matter about what it points to so pointer is just regular int
+            	//which symbolises address
+            	
             	size = 1;
-            	var = new Variable(id, type, ADR++, size);
+            	address = ADR++;
+            	var = new Variable(id, type, address, size);
             }
             hash_entrance = hashFunction(id);
             hashTable.elementAt(hash_entrance).addLast(var);
-             	
+            
             return size;
             
         	
@@ -249,9 +341,20 @@ class homework1 {
     		
     		codei(statements.right , ); // sends the beginning of array index's list +  the variable corresponding to the array
     	}
-}
+
+    	else if(statements.value.equals("pointer")) {
+    		// operator^ (* in c++)
+    		codel(statements.left);
+    		System.out.println("ind");
+    	}
+    }
+    
     private static void coder(AST statements) {
     	if(statements.value.equals("identifier")){
+    		codel(statements);
+    		System.out.println("ind");
+    	}
+    	if(statements.value.equals("pointer")){
     		codel(statements);
     		System.out.println("ind");
     	}
