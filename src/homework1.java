@@ -1,5 +1,8 @@
 import java.util.Scanner;
 import java.util.Vector;
+
+import homework1.SymbolTable;
+
 import java.util.LinkedList;
 
 /*
@@ -60,7 +63,7 @@ class homework1 {
     	int g; //size of type of the array
     	int dim; //number of dimensions
     	int[] d_size; //size of each dimension
-    	
+    	int subpart; // constant to each array
     	public VariableArray(String name,String type,int address, int size){
     		super(name, type, address, size);
     		
@@ -199,12 +202,54 @@ class homework1 {
       
     }
     
-    
-    private static void codel(AST statements) {
-    	if(statements.value.equals("identifier"))
-    		System.out.println("ldc " + SymbolTable.varById(statements.left.value).address);
+    public static int typesize(String type) {
+    	
+    	if(type.equals("int") || type.equals("boolean") || type.equals("pointer") || type.equals("real")) {
+    		return 1;
+    	}
+    	return SymbolTable.varById(type).size;
+    	
+    }
+  
+    private static void array_case(AST indexList, int[] dim_size, int dim_num, int curr_dim_num ,int size_type) { // handles ldc+ixa for each index accessed
+    	if(indexList == null) {
+    		return;
+    	}
+    	array_case(indexList.left, dim_size, dim_num, curr_dim_num - 1, size_type);
+
+    	coder(indexList.right); // prints the index
+    	int N = 1;
+    	for(int i = curr_dim_num + 1; i < dim_num; i++) {
+    		N *= dim_size[i];
+    	}
+    	System.out.println("ixa " + N*size_type);
+
+    	
+    }
+    private static void codei(AST indexList, VariableArray var) {
+    	
+    	
+    	int dim_num = var.dim; 
+    	int[] dim_size = var.d_size;
+    	int subpart = var.subpart;
+    	int size_type = typesize(var.type);
+    	
+    	array_case(indexList, dim_size, dim_num, dim_num - 1, size_type);
+    	
+    	System.out.println("dec " + subpart);
+    	return;
     }
     
+    private static void codel(AST statements) {
+    	if(statements.value.equals("identifier")) {
+    		System.out.println("ldc " + SymbolTable.varById(statements.left.value).address);
+    	}
+    	if(statements.value.equals("array")) {
+    		codel(statements.left); // identifier of the array
+    		
+    		codei(statements.right , ); // sends the beginning of array index's list +  the variable corresponding to the array
+    	}
+}
     private static void coder(AST statements) {
     	if(statements.value.equals("identifier")){
     		codel(statements);
