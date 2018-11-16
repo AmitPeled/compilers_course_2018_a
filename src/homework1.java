@@ -276,7 +276,7 @@ class homework1 {
             }
             hash_entrance = hashFunction(id);
             hashTable.elementAt(hash_entrance).addLast(var);
-             
+            
             return size;
             
         	
