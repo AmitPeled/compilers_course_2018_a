@@ -3,8 +3,6 @@ import java.util.Vector;
 
 import javax.lang.model.element.Element;
 
-import homework1.SymbolTable;
-
 import java.util.LinkedList;
 
 /*
@@ -61,18 +59,31 @@ class homework1 {
     	
     }
     
+    static class VariablePointer extends Variable{
+    	String pointsTo; //points to which type?
+    	
+    	public VariablePointer(String name,String type,int address, int size, String pointsTo){
+    		super(name, type, address, size);
+    		this.pointsTo = pointsTo;
+    	}
+    	
+    	public String getPointsTo(){ return this.pointsTo; }
+    }
+    
     static class VariableArray extends Variable{
     	int g; //size of type of the array
+    	String typeElement; //type of the elements of the array
     	int dim; //number of dimensions
     	int[] d_size; //size of each dimension
     	int subpart; // constant to each array
 
     	public VariableArray(String name,String type,int address, int size, int g, int dim, int[] d_size,
-    			AST rangeList){
+    			String typeElement, AST rangeList){
     		super(name, type, address, size);
     		this.g = g;
     		this.dim = dim;
     		this.d_size = d_size; //the array was created in inputHandling. no need for deep copying
+    		this.typeElement = typeElement;
     		
     		this.subpart = calcSubpart(rangeList, dim - 1);
     		
@@ -108,7 +119,11 @@ class homework1 {
     		return prev + current; //return the sum of all previous including himself
     	}
     	
-    	
+    	public int getG(){ return this.g; }
+    	public String getTypeElement(){ return this.typeElement; }
+    	public int getDim(){ return this.dim; }
+    	public int[] getD_size(){ return this.d_size; }
+    	public int getSubpart(){ return this.subpart; }
     }
     
     
@@ -233,6 +248,7 @@ class homework1 {
             	int g = typesize(type); //size of the array's elements.
             	int dims_count = 0; //number of dimensions
             	int[] array_dims;
+            	
             	//count number of dimensions
             	AST rangeList = declarations.right.right.left; //first rangeList
             	while (rangeList != null){
@@ -253,9 +269,12 @@ class homework1 {
             	address  = ADR;
             	ADR += size;
             	
+            	//declarations->var->array->identifeir/const->name
+            	String typeElement = declarations.right.right.right.right.value;
             	
             	//subpart attribute is calculated with rangeList
-            	var = new VariableArray(id, type, address, size, g, dims_count, array_dims, rangeList);
+            	var = new VariableArray(id, type, address, size, g, dims_count, array_dims,
+            			typeElement, rangeList);
             	hash_entrance = hashFunction(id);
                 hashTable.elementAt(hash_entrance).addLast(var);
             	
@@ -263,12 +282,17 @@ class homework1 {
             else if(type.equals("record")){
             	//TODO
             }
+            else if(type.equals("pointer")){
+            	//pointers are not primitives.
+            	//we need to save additional attribute for which type they point to.
+            	size = 1;
+            	address = ADR++;
+            	//type.left.left is the type of the identifier that the pointer points to.
+            	String pointsTo = (declarations.right.right).left.left.value;
+            	var = new VariablePointer(id, type, address, size, pointsTo);	
+            }
             else {
-            	//primitives & pointers
-            	
-            	//pointers are regular variables in matters of attributes and memory
-            	//we assumed we don't matter about what it points to so pointer is just regular int
-            	//which symbolises address
+            	//primitives
             	
             	size = 1;
             	address = ADR++;
@@ -321,7 +345,7 @@ class homework1 {
     private static void codei(AST indexList, VariableArray var) {
     	
     	
-    	int dim_num = var.dim; 
+    	int dim_num = var.dim;
     	int[] dim_size = var.d_size;
     	int subpart = var.subpart;
     	int size_type = typesize(var.type);
@@ -332,21 +356,38 @@ class homework1 {
     	return;
     }
     
-    private static void codel(AST statements) {
+    // prints code for address and return the type of that address
+    private static String codel(AST statements) {
     	if(statements.value.equals("identifier")) {
-    		System.out.println("ldc " + SymbolTable.varById(statements.left.value).address);
+    		String id = statements.left.value;
+    		Variable var = SymbolTable.varById(id);
+    		
+    		System.out.println("ldc " + var.address);
+    		return var.name;
     	}
     	if(statements.value.equals("array")) {
-    		codel(statements.left); // identifier of the array
+    		String name = codel(statements.left); // identifier of the array
+    		Variable var = SymbolTable.varById(name);
+    		VariableArray varArr = (VariableArray)var;
     		
-    		codei(statements.right , ); // sends the beginning of array index's list +  the variable corresponding to the array
+    		// sends the beginning of array index's list +  the variable corresponding to the array
+    		codei(statements.right, varArr);
+    		
+    		return varArr.getTypeElement();
     	}
 
-    	else if(statements.value.equals("pointer")) {
+    	if(statements.value.equals("pointer")) {
     		// operator^ (* in c++)
-    		codel(statements.left);
+    		String name = codel(statements.left);
     		System.out.println("ind");
+    		
+    		Variable var = SymbolTable.varById(name);
+    		
+    		return (((VariablePointer)var).pointsTo);
     	}
+    	
+    	System.out.println("ERROR: codel couldn't find case for this case");
+    	return null; //java-compiler wanted default return
     }
     
     private static void coder(AST statements) {
