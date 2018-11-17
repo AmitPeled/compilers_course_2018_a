@@ -332,27 +332,44 @@ class homework1 {
     	return;
     }
     
-    private static void codel(AST statements) {
+    private static String codel(AST statements) {
+    	String type = "";
     	if(statements.value.equals("identifier")) {
     		System.out.println("ldc " + SymbolTable.varById(statements.left.value).address);
+    		type = SymbolTable.varById(statements.left.value).name;
     	}
-    	if(statements.value.equals("array")) {
-    		codel(statements.left); // identifier of the array
-    		
-    		codei(statements.right , ); // sends the beginning of array index's list +  the variable corresponding to the array
+    	else if(statements.value.equals("array")) {
+    		String arrName = codel(statements.left); // identifier of the array
+    		VariableArray var = (VariableArray)SymbolTable.varById(arrName);
+    		codei(statements.right ,var); // sends the beginning of array index's list +  the variable corresponding to the array
+    		type = arrName;
     	}
 
     	else if(statements.value.equals("pointer")) {
     		// operator^ (* in c++)
-    		codel(statements.left);
+    		String pointerName = codel(statements.left);
     		System.out.println("ind");
+    		type = pointerName; 
     	}
+    	return type;
     }
     
     private static void coder(AST statements) {
     	if(statements.value.equals("identifier")){
     		codel(statements);
     		System.out.println("ind");
+    	}
+    	if(statements.value.equals("array")){
+    		codel(statements);
+    		System.out.println("ind");
+    	}
+    	if(statements.value.equals("record")){
+    		codel(statements);
+    		System.out.println("ind");
+    	}
+    	if(statements.value.equals("print")){
+    		coder(statements.left);
+    		System.out.println("print");
     	}
     	if(statements.value.equals("pointer")){
     		codel(statements);
