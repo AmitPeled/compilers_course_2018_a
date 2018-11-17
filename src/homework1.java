@@ -117,7 +117,6 @@ class homework1 {
     		}
     		current = leftRange * multi;
     		
-    		System.out.println("finished calcSubpart");
     		return prev + current; //return the sum of all previous including himself
     	}
     	
@@ -158,7 +157,6 @@ class homework1 {
         		declarations = tree.right.left.left;
             }
             
-            System.out.println("DEBUG: before inputHandling");
             
             inputHandling(declarations);
         	
@@ -366,11 +364,10 @@ class homework1 {
     }
     private static void codei(AST indexList, VariableArray var) {
     	
-    	
     	int dim_num = var.dim;
     	int[] dim_size = var.d_size;
     	int subpart = var.subpart;
-    	int size_type = typesize(var.type);
+    	int size_type = typesize(var.typeElement);
     	
     	array_case(indexList, dim_size, dim_num, dim_num - 1, size_type);
     	
@@ -586,7 +583,6 @@ class homework1 {
         Scanner scanner = new Scanner(System.in);
         AST ast = AST.createAST(scanner);
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
-        System.out.println("DEBUG: created symbolTabel");
         generatePCode(ast, symbolTable);
         //SymbolTable.printHashTable();
     }
