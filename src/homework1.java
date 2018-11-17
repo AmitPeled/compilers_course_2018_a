@@ -307,8 +307,23 @@ class homework1 {
             	
             	size = 1;
             	address = ADR++;
-            	//type.left.left is the type of the identifier that the pointer points to.
-            	String pointsTo = (declarations.right.right).left.left.value;
+            	/*
+            	 * two possiblities for where the pointsTo type
+            	 * 1. none-primitive
+            	 * (type).left.left
+            	 * 
+            	 * 2. primitive
+            	 * (type).left
+            	 */
+
+            	String pointsTo;
+            	if((declarations.right.right).left.value.equals("identifier"))
+            		//1. none-primitive
+            		pointsTo = (declarations.right.right).left.left.value;
+            	else
+            		//2. primitive
+            		pointsTo = (declarations.right.right).left.value;
+            	
             	var = new VariablePointer(id, type, address, size, pointsTo);	
             }
             else {
@@ -517,7 +532,8 @@ class homework1 {
     
     private static void code(AST statements) {
     	if(statements == null) return;
-    	code(statements.left); //code next statement (from down to up)
+    		code(statements.left); //code next statement (from down to up)
+    	
     	
     	AST currStatement = statements.right; //first operator of the statement
     	
