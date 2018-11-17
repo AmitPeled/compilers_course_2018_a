@@ -414,6 +414,10 @@ class homework1 {
     		codel(statements);
     		System.out.println("ind");
     	}
+    	if(statements.value.equals("array")){
+    		codel(statements);
+    		System.out.println("ind");
+    	}
     	if(statements.value.equals("pointer")){
     		codel(statements);
     		System.out.println("ind");
