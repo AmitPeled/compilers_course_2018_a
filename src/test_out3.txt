@@ -1,0 +1,7 @@
+DEBUG: before inputHandling
+DEBUG: inputHandling: array case
+DEBUG: type=array, id=a
+typeElement=int
+DEBUG: after typsize
+DEBUG: checking node's name: rangeList
+DEBUG: dims_count=2

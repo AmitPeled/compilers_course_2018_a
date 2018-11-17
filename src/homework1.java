@@ -109,13 +109,15 @@ class homework1 {
     		
     		AST range = rangeList.right;
     		int leftRange = Integer.parseInt(range.left.left.value);
+    		
     		//calc number of elements the left range represents
     		int multi = this.g;
-    		for(int j=i+1; i<this.dim; j++) {
+    		for(int j=i+1; j<this.dim; j++) {
     			multi *= this.d_size[j];
     		}
     		current = leftRange * multi;
     		
+    		System.out.println("finished calcSubpart");
     		return prev + current; //return the sum of all previous including himself
     	}
     	
@@ -155,6 +157,9 @@ class homework1 {
             if(tree!=null && tree.right!=null &&tree.right.left!=null) {
         		declarations = tree.right.left.left;
             }
+            
+            System.out.println("DEBUG: before inputHandling");
+            
             inputHandling(declarations);
         	
             //printHashTable();
@@ -245,20 +250,40 @@ class homework1 {
             
             if(type.equals("array")) {
             	//TODO: prepare attributes for variableArray and call the constructor
-            	int g = typesize(type); //size of the array's elements.
+            	
+            	/*
+            	 * type of Elements can be as:
+            	 * 1. when Elements are not primitives:
+            	 * declarations->var->array->identifeir->name
+            	 * 
+            	 * 2. when Elements are primitives:
+            	 * declarations->var->array->name
+            	 * 
+            	 * 
+            	 */
+            	String typeElement;
+            	if(declarations.right.right.right.value.equals("identifier"))
+            		//1. non-primitve
+            		typeElement = declarations.right.right.right.right.value;
+            	else
+            		//2. primtive
+            		typeElement = declarations.right.right.right.value;
+
+            	int g = typesize(typeElement); //size of the array's elements.
             	int dims_count = 0; //number of dimensions
             	int[] array_dims;
-            	
             	//count number of dimensions
             	AST rangeList = declarations.right.right.left; //first rangeList
             	while (rangeList != null){
             		dims_count++;
             		rangeList = rangeList.left;
             	}
+
+            	
             	array_dims = new int[dims_count];
             	rangeList = declarations.right.right.left; //reset to first rangeList
             	array_dims(rangeList, array_dims, dims_count - 1); //from last to first
-            	
+
             	//count number of elements
             	//multiplication of all dims_sizes
             	size = 1;
@@ -269,15 +294,10 @@ class homework1 {
             	address  = ADR;
             	ADR += size;
             	
-            	//declarations->var->array->identifeir/const->name
-            	String typeElement = declarations.right.right.right.right.value;
             	
             	//subpart attribute is calculated with rangeList
             	var = new VariableArray(id, type, address, size, g, dims_count, array_dims,
             			typeElement, rangeList);
-            	hash_entrance = hashFunction(id);
-                hashTable.elementAt(hash_entrance).addLast(var);
-            	
             }
             else if(type.equals("record")){
             	//TODO
@@ -285,6 +305,8 @@ class homework1 {
             else if(type.equals("pointer")){
             	//pointers are not primitives.
             	//we need to save additional attribute for which type they point to.
+            	
+            	
             	size = 1;
             	address = ADR++;
             	//type.left.left is the type of the identifier that the pointer points to.
@@ -294,6 +316,8 @@ class homework1 {
             else {
             	//primitives
             	
+            	
+            	
             	size = 1;
             	address = ADR++;
             	var = new Variable(id, type, address, size);
@@ -302,8 +326,6 @@ class homework1 {
             hashTable.elementAt(hash_entrance).addLast(var);
             
             return size;
-            
-        	
         }
         
         private static int hashFunction(String identifier) {/* the function returns the sum of the ascii values
@@ -564,6 +586,7 @@ class homework1 {
         Scanner scanner = new Scanner(System.in);
         AST ast = AST.createAST(scanner);
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
+        System.out.println("DEBUG: created symbolTabel");
         generatePCode(ast, symbolTable);
         //SymbolTable.printHashTable();
     }
