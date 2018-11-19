@@ -42,7 +42,7 @@ class homework1 {
         // Think! what does a Variable contain?
     	String name;
     	String type; 
-    	int address;
+    	int address; //if the variable is attribute of record, address is offset!
     	int size;
     	public Variable(String name,String type,int address, int size) {
     		this.name=name;
@@ -127,7 +127,14 @@ class homework1 {
     	public int getSubpart(){ return this.subpart; }
     }
     
-    
+    static class VariableRecord extends Variable{
+    	String[] attris;
+    	public VariableRecord(String name,String type,int address, int size, String[] attris){
+    		super(name, type, address, size);
+    		this.attris = attris; //no need for deep copy
+    	}
+    	public String[] getAttris(){ return this.attris; }
+    }
 
     public static final class SymbolTable{
         // Think! what does a SymbolTable contain?
@@ -158,7 +165,7 @@ class homework1 {
             }
             
             
-            inputHandling(declarations);
+            inputHandling(declarations, false);
         	
             //printHashTable();
             /*
@@ -230,12 +237,12 @@ class homework1 {
         	
         }
         
-        private static int inputHandling(AST declarations) {
+        private static int inputHandling(AST declarations, boolean isAttri) {
         	//coded - reads the declaration and add the new variable to the hashTable
-        	//returns size of all the variables before it (for records)
+        	//returns size of all the variables before it (for records). to set the offset
         	if(declarations == null) return 0;
         	
-        	inputHandling(declarations.left);
+        	int sumofSizesBefore = inputHandling(declarations.left, isAttri);
         	
         	
         	int hash_entrance, size = 1, address;
@@ -299,6 +306,7 @@ class homework1 {
             }
             else if(type.equals("record")){
             	//TODO
+            	
             }
             else if(type.equals("pointer")){
             	//pointers are not primitives.
@@ -338,7 +346,7 @@ class homework1 {
             hash_entrance = hashFunction(id);
             hashTable.elementAt(hash_entrance).addLast(var);
             
-            return size;
+            return sumofSizesBefore + size;
         }
         
         private static int hashFunction(String identifier) {/* the function returns the sum of the ascii values
