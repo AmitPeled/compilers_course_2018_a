@@ -441,6 +441,15 @@ class homework1 {
     		codel(statements);
     		System.out.println("ind");
     	}
+    	if(statements.value.equals("record")){
+    		codel(statements);
+    		System.out.println("ind");
+    	}
+    	if(statements.value.equals("print")){
+    		coder(statements.left);
+    		System.out.println("print");
+    	}
+
     	if(statements.value.equals("pointer")){
     		codel(statements);
     		System.out.println("ind");
