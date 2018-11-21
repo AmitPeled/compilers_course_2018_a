@@ -1,9 +1,10 @@
 import java.util.Scanner;
 import java.util.Vector;
-
+import java.util.Stack;
 import javax.lang.model.element.Element;
 
 import java.util.LinkedList;
+
 
 /*
 * Hints in doing the HW:
@@ -19,6 +20,7 @@ class homework1 {
         public final AST right; // can be null
         
         public static int LAB = 0;
+        public static Stack<Integer> loopLabStack = new Stack<Integer>();
         
         private AST(String val,AST left, AST right) {
             value = val;
@@ -437,11 +439,6 @@ class homework1 {
     		codel(statements);
     		System.out.println("ind");
     	}
-    	if(statements.value.equals("print")){
-    		coder(statements.left);
-    		System.out.println("print");
-    	}
-
     	if(statements.value.equals("pointer")){
     		codel(statements);
     		System.out.println("ind");
@@ -545,7 +542,10 @@ class homework1 {
     	
     	
     	AST currStatement = statements.right; //first operator of the statement
-    	
+    	if(currStatement.value.equals("break")) {
+    		int label = AST.loopLabStack.lastElement();
+    		System.out.println("ujp L" + label);
+    	}
     	if(currStatement.value.equals("assignment")) {
     		codel(currStatement.left);
     		coder(currStatement.right);
@@ -583,12 +583,17 @@ class homework1 {
     	else if(currStatement.value.equals("while")){
     		int currLab = currStatement.LAB++;
     		int end_while_label = currStatement.LAB++;
+    		AST.loopLabStack.add(end_while_label);
+
     		System.out.println("L" + currLab + ":");
     		coder(currStatement.left);
     		System.out.println("fjp L" + end_while_label );
     		code(currStatement.right);
     		System.out.println("ujp L" + currLab);
     		System.out.println("L" + end_while_label + ":");
+    		AST.loopLabStack.pop();
+
+
     	}
     		
     	//else, do nothing
