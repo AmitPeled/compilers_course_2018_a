@@ -1,0 +1,21 @@
+ERROR: codel couldn't find case for this case
+ldc 6
+sto
+ldc 12
+ERROR: codel couldn't find case for this case
+ind
+sto
+ERROR: codel couldn't find case for this case
+ldc 6
+sto
+ERROR: codel couldn't find case for this case
+ldc 5
+sto
+ldc 5
+ldc 1
+ixa 1
+dec 1
+ldc 2.500000
+sto
+ERROR: codel couldn't find case for this case
+ind

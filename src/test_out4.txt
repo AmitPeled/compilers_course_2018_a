@@ -1,0 +1,6 @@
+ldc 5
+ldc 1
+sto
+ldc 6
+ldc 1
+sto

@@ -1,8 +1,6 @@
 import java.util.Scanner;
 import java.util.Vector;
 
-import javax.lang.model.element.Element;
-
 import java.util.LinkedList;
 
 /*
@@ -42,28 +40,40 @@ class homework1 {
         // Think! what does a Variable contain?
     	String name;
     	String type; 
-    	int address; //if the variable is attribute of record, address is offset!
+    	int address; 
+    	int offset; //instead of address, in "attribute mode"
     	int size;
-    	public Variable(String name,String type,int address, int size) {
+    	boolean isAttri;
+    	public Variable(String name,String type,int addrOrOffset, int size, boolean isAttri) {
     		this.name=name;
     		this.type=type;
-    		this.address = address;
-    		this.size=size;
+    		if(!isAttri){
+    			this.address = addrOrOffset;
+    			this.offset = -1;
+    		}
+    		else{
+    			this.address = -1;
+    			this.offset = addrOrOffset;
+    		}
     		
+    		this.size=size;
+    		this.isAttri = isAttri;
     	}
     	public String getName() {return this.name;}
     	public String getType() {return this.type;}
     	public int getAdrr() {return this.address;}
+    	public int getOffset() {return this.offset;}
     	public int getSize() {return this.size;}
-    	
+    	public boolean getIsAttri() {return this.isAttri;}
     	
     }
     
     static class VariablePointer extends Variable{
     	String pointsTo; //points to which type?
     	
-    	public VariablePointer(String name,String type,int address, int size, String pointsTo){
-    		super(name, type, address, size);
+    	public VariablePointer(String name,String type,int addrOrOffset, int size, boolean isAttri,
+    			String pointsTo){
+    		super(name, type, addrOrOffset, size, isAttri);
     		this.pointsTo = pointsTo;
     	}
     	
@@ -77,9 +87,9 @@ class homework1 {
     	int[] d_size; //size of each dimension
     	int subpart; // constant to each array
 
-    	public VariableArray(String name,String type,int address, int size, int g, int dim, int[] d_size,
-    			String typeElement, AST rangeList){
-    		super(name, type, address, size);
+    	public VariableArray(String name,String type,int addrOrOffset, int size, boolean isAttri, 
+    			int g, int dim, int[] d_size, String typeElement, AST rangeList){
+    		super(name, type, addrOrOffset, size, isAttri);
     		this.g = g;
     		this.dim = dim;
     		this.d_size = d_size; //the array was created in inputHandling. no need for deep copying
@@ -129,8 +139,9 @@ class homework1 {
     
     static class VariableRecord extends Variable{
     	String[] attris;
-    	public VariableRecord(String name,String type,int address, int size, String[] attris){
-    		super(name, type, address, size);
+    	public VariableRecord(String name,String type,int addrOrOffset, int size, boolean isAttri, 
+    			String[] attris){
+    		super(name, type, addrOrOffset, size, isAttri);
     		this.attris = attris; //no need for deep copy
     	}
     	public String[] getAttris(){ return this.attris; }
@@ -245,7 +256,7 @@ class homework1 {
         	int sumofSizesBefore = inputHandling(declarations.left, isAttri);
         	
         	
-        	int hash_entrance, size = 1, address;
+        	int hash_entrance, size = 1, addrOrOffset;
             String id,type;
             Variable var = null;
             
@@ -255,7 +266,6 @@ class homework1 {
             
             if(type.equals("array")) {
             	//TODO: prepare attributes for variableArray and call the constructor
-            	
             	/*
             	 * type of Elements can be as:
             	 * 1. when Elements are not primitives:
@@ -269,11 +279,10 @@ class homework1 {
             	String typeElement;
             	if(declarations.right.right.right.value.equals("identifier"))
             		//1. non-primitve
-            		typeElement = declarations.right.right.right.right.value;
+            		typeElement = declarations.right.right.right.left.value;
             	else
             		//2. primtive
             		typeElement = declarations.right.right.right.value;
-
             	int g = typesize(typeElement); //size of the array's elements.
             	int dims_count = 0; //number of dimensions
             	int[] array_dims;
@@ -283,8 +292,6 @@ class homework1 {
             		dims_count++;
             		rangeList = rangeList.left;
             	}
-
-            	
             	array_dims = new int[dims_count];
             	rangeList = declarations.right.right.left; //reset to first rangeList
             	array_dims(rangeList, array_dims, dims_count - 1); //from last to first
@@ -296,17 +303,56 @@ class homework1 {
             		size *= array_dims[i];
             	}
             	size *= g; //(number of elements * element's size)
-            	address  = ADR;
+            	if(!isAttri)
+            		addrOrOffset  = ADR; //address
+            	else
+            		addrOrOffset = sumofSizesBefore; //offset
             	ADR += size;
             	
             	
             	//subpart attribute is calculated with rangeList
-            	var = new VariableArray(id, type, address, size, g, dims_count, array_dims,
+            	var = new VariableArray(id, type, addrOrOffset, size, isAttri, g, dims_count, array_dims,
             			typeElement, rangeList);
             }
             else if(type.equals("record")){
             	//TODO
+            	String[] attris;
+            	AST ourDeclarations = (declarations.right.right).left; //type.left
+            	int attris_num = 0;
+            	while(ourDeclarations != null){
+            		attris_num++;
+            		ourDeclarations = ourDeclarations.left;
+            	}
+            	attris = new String[attris_num];
+            	ourDeclarations = (declarations.right.right).left; //reset
+            	int i=0;
+            	while(ourDeclarations != null){
+            		attris[i] = ourDeclarations.right.left.left.value;
+            		i++;
+            		ourDeclarations = ourDeclarations.left;
+            	}
+            	//attributes in the array are backwards (I don't think it matters)
+            	/*
+            	String tmp;
+            	int j;
+				for(i=0, j=attris.length; i <= j; i++){
+            		
+            	}*/ //will add this later :)
             	
+            	//first set record's address. then, his attributes' address
+            	if(!isAttri)
+            		addrOrOffset = ADR; //address
+            	else
+            		addrOrOffset = sumofSizesBefore; //offset
+            	
+            	ourDeclarations = (declarations.right.right).left; //reset
+            	//size of the record is the latest undefined attribute
+            	size = inputHandling(ourDeclarations,true);
+            	
+            	//ADR += size;
+            	//-- no need for "ADR+=" because the attributes does it for us
+            	
+            	var = new VariableRecord(id, type, addrOrOffset, size, isAttri, attris);
             }
             else if(type.equals("pointer")){
             	//pointers are not primitives.
@@ -314,7 +360,11 @@ class homework1 {
             	
             	
             	size = 1;
-            	address = ADR++;
+            	if(!isAttri)
+            		addrOrOffset = ADR; //address
+            	else
+            		addrOrOffset = sumofSizesBefore; //offset
+            	ADR += size;
             	/*
             	 * two possiblities for where the pointsTo type
             	 * 1. none-primitive
@@ -332,7 +382,7 @@ class homework1 {
             		//2. primitive
             		pointsTo = (declarations.right.right).left.value;
             	
-            	var = new VariablePointer(id, type, address, size, pointsTo);	
+            	var = new VariablePointer(id, type, addrOrOffset, size, isAttri, pointsTo);	
             }
             else {
             	//primitives
@@ -340,13 +390,18 @@ class homework1 {
             	
             	
             	size = 1;
-            	address = ADR++;
-            	var = new Variable(id, type, address, size);
+            	if(!isAttri)
+            		addrOrOffset = ADR; //address
+            	else
+            		addrOrOffset = sumofSizesBefore; //offset
+            	
+            	ADR += size;
+            	var = new Variable(id, type, addrOrOffset, size, isAttri);
             }
             hash_entrance = hashFunction(id);
             hashTable.elementAt(hash_entrance).addLast(var);
             
-            return sumofSizesBefore + size;
+            return sumofSizesBefore + size; //used for records - next offset
         }
         
         private static int hashFunction(String identifier) {/* the function returns the sum of the ascii values
@@ -403,8 +458,10 @@ class homework1 {
     	if(statements.value.equals("identifier")) {
     		String id = statements.left.value;
     		Variable var = SymbolTable.varById(id);
-    		
-    		System.out.println("ldc " + var.address);
+    		if(!var.isAttri)
+    			System.out.println("ldc " + var.address);
+    		else
+    			System.out.println("inc " + var.offset);
     		return var.name;
     	}
     	if(statements.value.equals("array")) {
@@ -427,6 +484,16 @@ class homework1 {
     		
     		return (((VariablePointer)var).pointsTo);
     	}
+    	
+    	if(statements.value.equals("record")) {
+    		codel(statements.left);
+    		String name = codel(statements.right);
+    		
+    		return name;
+    	}
+    	
+    	
+    	
     	
     	System.out.println("ERROR: codel couldn't find case for this case");
     	return null; //java-compiler wanted default return
