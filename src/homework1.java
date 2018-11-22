@@ -273,8 +273,6 @@ class homework1 {
             	 * 
             	 * 2. when Elements are primitives:
             	 * declarations->var->array->name
-            	 * 
-            	 * 
             	 */
             	String typeElement;
             	if(declarations.right.right.right.value.equals("identifier"))
