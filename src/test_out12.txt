@@ -24,6 +24,7 @@ fjp L4
 ldc 6
 ind
 print
+ujp L3
 L4:
 ldc 6
 ldc 6

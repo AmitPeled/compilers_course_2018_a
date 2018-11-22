@@ -16,6 +16,7 @@ class homework1 {
         public final String value;
         public final AST left; // can be null
         public final AST right; // can be null
+        public AST father; //for switch. can be null for root
         
         public static int LAB = 0;
         public static Stack<Integer> loopLabStack = new Stack<Integer>();
@@ -25,16 +26,23 @@ class homework1 {
             this.left = left;
             this.right = right;
         }
-
+        
         public static AST createAST(Scanner input) {
             if (!input.hasNext())
                 return null;
-
+            
             String value = input.nextLine();
             if (value.equals("~"))
                 return null;
 
             return new AST(value, createAST(input), createAST(input));
+        }
+        public void setFathers(AST father){
+        	this.father = father;
+        	if(this.left != null)
+        		this.left.setFathers(this);
+        	if(this.right != null)
+        		this.right.setFathers(this);
         }
     }
 
@@ -609,6 +617,17 @@ class homework1 {
     	}
     }
     
+    private static void codec(AST caseList, int switch_end_label) {
+    	int case_label = AST.LAB++;
+    	System.out.println("L" + case_label + ":");
+    	if(caseList.right.right != null)
+    		code(caseList.right.right); //caseList->case->statementsList
+    	System.out.println("ujp L" + switch_end_label);
+    	if(caseList.father.value.equals("caseList"))
+    		codec(caseList.father, switch_end_label); //call the next case
+    	System.out.println("ujp L" + case_label);
+    }
+    
     private static void code(AST statements) {
     	if(statements == null) return;
     		code(statements.left); //code next statement (from down to up)
@@ -631,8 +650,8 @@ class homework1 {
     	else if(currStatement.value.equals("if")) {
     		if(currStatement.right.value.equals("else")) {
     			//if-else code:
-    			int else_label = currStatement.LAB++;
-    			int end_if_label = currStatement.LAB++;
+    			int else_label = AST.LAB++;
+    			int end_if_label = AST.LAB++;
     			coder(currStatement.left); //condition
     			System.out.println("fjp L" + else_label);
     			code(currStatement.right.left); //if code
@@ -643,7 +662,7 @@ class homework1 {
     		}
     		else {
     			//if code:
-    			int end_if_label = currStatement.LAB++;
+    			int end_if_label = AST.LAB++;
     			
     			coder(currStatement.left); //condition
     			System.out.println("fjp L" + end_if_label);
@@ -654,8 +673,8 @@ class homework1 {
     			
     	}
     	else if(currStatement.value.equals("while")){
-    		int currLab = currStatement.LAB++;
-    		int end_while_label = currStatement.LAB++;
+    		int currLab = AST.LAB++;
+    		int end_while_label = AST.LAB++;
     		AST.loopLabStack.add(end_while_label);
 
     		System.out.println("L" + currLab + ":");
@@ -665,8 +684,32 @@ class homework1 {
     		System.out.println("ujp L" + currLab);
     		System.out.println("L" + end_while_label + ":");
     		AST.loopLabStack.pop();
-
-
+    	}
+    	else if(currStatement.value.equals("switch")){
+    		//we will do this like in the lectures
+    		//(problem is that the tree is upside down.
+    		//so we will go to the most deep case, and call recursively from there.
+    		
+    		//1. create the code which is before the cases
+    		int end_switch_label = AST.LAB++;
+    		coder(currStatement.left); //expression
+    		System.out.println("neg");
+    		System.out.println("ixj L"+end_switch_label);
+    		
+    		//2. find the deepest case (the first)
+    		//and call the recursive function from there.
+    		AST caseList = currStatement.right;
+    		if(caseList == null){
+    			//no cases at all.
+    		}
+    		//find the deepest case
+    		else while(caseList.left != null){
+    			caseList = caseList.left;
+    		}
+    		codec(caseList, end_switch_label);
+    		
+    		//3. just print the switch' label (codec also prints all the ujp at the end)
+    		System.out.println("L" + end_switch_label + ":");
     	}
     		
     	//else, do nothing
@@ -689,9 +732,9 @@ class homework1 {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         AST ast = AST.createAST(scanner);
+        ast.setFathers(null); //root has no father
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
         generatePCode(ast, symbolTable);
-        //SymbolTable.printHashTable();
     }
 
 }

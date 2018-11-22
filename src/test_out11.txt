@@ -13,6 +13,7 @@ and
 fjp L1
 ldc 1
 print
+ujp L1
 ldc 2
 print
 ujp L0
