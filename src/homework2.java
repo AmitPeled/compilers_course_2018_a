@@ -9,7 +9,7 @@ import java.util.LinkedList;
 *   a) Make sure you first understand what you are doing.
 *   b) Watch Lecture 2 focusing on the code described
  */
-class homework1 {
+class homework2 {
 
     // Abstract Syntax Tree
     static final class AST {
