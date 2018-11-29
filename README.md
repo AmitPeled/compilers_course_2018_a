@@ -10,5 +10,5 @@ homework1:
 - conditions operators (==, !=, <, <=, >, >=, !)
 
 homework2:
-- complex types variables (multi-dim arrays, records, pointers)
+- complex types variables (multi-dim and complex arrays, records, pointers)
 - switch, break

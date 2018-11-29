@@ -2,13 +2,13 @@ ldc 5
 inc 0
 ldc 1
 sto
-L0:
+while_0:
 ldc 5
 inc 0
 ind
 ldc 20
 leq
-fjp L1
+fjp while_out_1
 ldc 5
 inc 1
 inc 1
@@ -30,8 +30,8 @@ ind
 ldc 1
 add
 sto
-ujp L0
-L1:
+ujp while_0
+while_out_1:
 ldc 5
 inc 1
 inc 1
