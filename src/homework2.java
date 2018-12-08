@@ -161,7 +161,7 @@ class homework2 {
     
     static class VariableFunction extends Variable{
     	String SL_varName; //our static link function's name
-    	String[] paraArr; //our function's paramaters' names
+    	String[] paraArr; //our function's parameters' names
     	String ret_varName; //the return value 'type'. not necessary because it can only be primitive
     	
     	public VariableFunction(String name,String type,int addrOrOffset, int size, boolean isAttri,
@@ -278,8 +278,44 @@ class homework2 {
         	
         }
         
-        private static int inputHandling(AST declarations, boolean isAttri) {
+        private static void functionsList(AST functions, int nd, String SL_varName) {
+        	if(functions == null)
+        		return;
+        	functionsList(functions.left, nd, SL_varName); //func-brothers are from down to up
+        	
+        	
+        	AST currFunc = functions.right;
+        	AST idNparamaters = currFunc.left;
+        	AST scope = currFunc.right.left;
+        	
+        	String funcORproc = currFunc.value; //"function" or "procedure"
+        	String currFuncName = idNparamaters.left.left.value;
+        	String type = "function";
+        	boolean isVoid = funcORproc.equals("procedure")? true : false;
+        	String ret_varName = isVoid? "void" : idNparamaters.right.right.value;
+        	
+        	//TODO: create parameters
+        	
+        	//TODO: create local vars
+        	int size = inputHandling(scope.left, false, nd + 1);
+        	
+        	//create function variable himself, and add to hashTable
+        	VariableFunction currFuncVar = new VariableFunction(currFuncName, type, 0, size, false,
+        			nd, SL_varName, null, ret_varName); //unfinished: parame is null
+        	int hash_entrance = hashFunction(currFuncName);
+            hashTable.elementAt(hash_entrance).addLast(currFuncVar);
+            
+        	
+        	//TODO: add nested functions to Symbol Table - recursive call!
+        	functionsList(scope.right, nd + 1, currFuncName); //create sons
+        	
+        	
+        	
+        }
+
+        private static int inputHandling(AST declarations, boolean isAttri, int nd) {
         	//coded - reads the declaration and add the new variable to the hashTable
+        	//recursivly goes over all declarationsList
         	//returns size of all the variables before it (for records). to set the offset
         	if(declarations == null) return 0;
         	
@@ -740,13 +776,12 @@ class homework2 {
     	if(ast == null)
     		return;
     	
+    	//TODO: create new help function that call "code()" for each function
+    	
     	AST firstStatement = ast.right.right;
     	code(firstStatement);
     	
     	
-    	
-    	
-        // TODO: go over AST and print code
     }
  
     public static void main(String[] args) {
