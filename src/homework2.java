@@ -55,7 +55,9 @@ class homework2 {
     	int size;
     	boolean isAttri;
     	int nd; //nesting level of which the variable is defined
-    	public Variable(String name,String type,int addrOrOffset, int size, boolean isAttri, int nd) {
+    	String nestingFunc; //the function that the variable is nested inside
+    	public Variable(String name,String type,int addrOrOffset, int size, boolean isAttri,
+    			int nd, String nestingFunc) {
     		this.name=name;
     		this.type=type;
     		if(!isAttri){
@@ -70,6 +72,7 @@ class homework2 {
     		this.size=size;
     		this.isAttri = isAttri;
     		this.nd = nd;
+    		this.nestingFunc = nestingFunc;
     	}
     	public String getName() {return this.name;}
     	public String getType() {return this.type;}
@@ -84,8 +87,8 @@ class homework2 {
     	String pointsTo; //points to which type?
     	
     	public VariablePointer(String name,String type,int addrOrOffset, int size, boolean isAttri,
-    			int nd, String pointsTo){
-    		super(name, type, addrOrOffset, size, isAttri, nd);
+    			int nd, String nestingFunc, String pointsTo){
+    		super(name, type, addrOrOffset, size, isAttri, nd, nestingFunc);
     		this.pointsTo = pointsTo;
     	}
     	
@@ -100,8 +103,9 @@ class homework2 {
     	int subpart; // constant to each array
 
     	public VariableArray(String name,String type,int addrOrOffset, int size, boolean isAttri, 
-    			int nd, int g, int dim, int[] d_size, String typeElement, AST rangeList){
-    		super(name, type, addrOrOffset, size, isAttri, nd);
+    			int nd, String nestingFunc,
+    			int g, int dim, int[] d_size, String typeElement, AST rangeList){
+    		super(name, type, addrOrOffset, size, isAttri, nd, nestingFunc);
     		this.g = g;
     		this.dim = dim;
     		this.d_size = d_size; //the array was created in inputHandling. no need for deep copying
@@ -152,27 +156,25 @@ class homework2 {
     static class VariableRecord extends Variable{
     	String[] attris;
     	public VariableRecord(String name,String type,int addrOrOffset, int size, boolean isAttri, 
-    			int nd, String[] attris){
-    		super(name, type, addrOrOffset, size, isAttri, nd);
+    			int nd, String nestingFunc, String[] attris){
+    		super(name, type, addrOrOffset, size, isAttri, nd, nestingFunc);
     		this.attris = attris; //no need for deep copy
     	}
     	public String[] getAttris(){ return this.attris; }
     }
     
     static class VariableFunction extends Variable{
-    	String SL_varName; //our static link function's name
+    	//static link attribute is "nestingFunc" that all Variables has!
     	String[] paraArr; //our function's parameters' names
     	String ret_varName; //the return value 'type'. not necessary because it can only be primitive
     	
     	public VariableFunction(String name,String type,int addrOrOffset, int size, boolean isAttri,
     			int nd, String SL_varName, String[] paraArr, String ret_varName) {
-    		super(name, type, addrOrOffset, size, isAttri, nd);
-    		this.SL_varName = SL_varName;
+    		super(name, type, addrOrOffset, size, isAttri, nd, SL_varName);
     		this.paraArr = paraArr; //low copy - used only here
     		this.ret_varName = ret_varName;
     	}
     	
-    	public String getSL_varName() {return this.SL_varName;}
     	public String[] getParaArr() {return this.paraArr;}
     	public String gRet_varName() {return this.ret_varName;}
     }
@@ -181,22 +183,20 @@ class homework2 {
         // Think! what does a SymbolTable contain?
     	static Vector<LinkedList<Variable>> hashTable;
     	static int ADR=5; //address counter
-    	
+    	final static int hashSize = 100;
         public static SymbolTable generateSymbolTable(AST tree){
             // TODO: create SymbolTable from AST
             hashTable = new Vector<LinkedList<Variable>>();
-            AST declarations = null;
-            if(tree!=null && tree.right!=null &&tree.right.left!=null) {
-        		declarations = tree.right.left.left; //first declaration
-            }
+            /*
         	int dec_num = 0;
         	while(declarations!=null) { // counts the number of the variables
         		declarations=declarations.left;
         		dec_num++;
         	}            
             hashTable = new Vector<LinkedList<Variable>>(dec_num);
-            
-            for(int i = 0; i < dec_num; i++) {
+            */
+            hashTable = new Vector<LinkedList<Variable>>(SymbolTable.hashSize);
+            for(int i = 0; i < SymbolTable.hashSize; i++) {
             	hashTable.addElement(new LinkedList<Variable>());
             }
             
@@ -315,11 +315,11 @@ class homework2 {
 
         private static int inputHandling(AST declarations, boolean isAttri, int nd) {
         	//coded - reads the declaration and add the new variable to the hashTable
-        	//recursivly goes over all declarationsList
+        	//recursively goes over all declarationsList
         	//returns size of all the variables before it (for records). to set the offset
         	if(declarations == null) return 0;
         	
-        	int sumofSizesBefore = inputHandling(declarations.left, isAttri);
+        	int sumofSizesBefore = inputHandling(declarations.left, isAttri, nd);
         	
         	
         	int hash_entrance, size = 1, addrOrOffset;
@@ -335,17 +335,17 @@ class homework2 {
             	/*
             	 * type of Elements can be as:
             	 * 1. when Elements are not primitives:
-            	 * declarations->var->array->identifeir->name
+            	 * declarations->var->array->identifier->name
             	 * 
             	 * 2. when Elements are primitives:
             	 * declarations->var->array->name
             	 */
             	String typeElement;
             	if(declarations.right.right.right.value.equals("identifier"))
-            		//1. non-primitve
+            		//1. non-primitive
             		typeElement = declarations.right.right.right.left.value;
             	else
-            		//2. primtive
+            		//2. primitive
             		typeElement = declarations.right.right.right.value;
             	int g = typesize(typeElement); //size of the array's elements.
             	int dims_count = 0; //number of dimensions
@@ -375,7 +375,7 @@ class homework2 {
             	
             	
             	//subpart attribute is calculated with rangeList
-            	var = new VariableArray(id, type, addrOrOffset, size, isAttri, g, dims_count, array_dims,
+            	var = new VariableArray(id, type, addrOrOffset, size, isAttri, nd, g, dims_count, array_dims,
             			typeElement, rangeList);
             }
             else if(type.equals("record")){
@@ -411,12 +411,12 @@ class homework2 {
             	
             	ourDeclarations = (declarations.right.right).left; //reset
             	//size of the record is the latest undefined attribute
-            	size = inputHandling(ourDeclarations,true);
+            	size = inputHandling(ourDeclarations,true, nd);
             	
             	//ADR += size;
             	//-- no need for "ADR+=" because the attributes does it for us
             	
-            	var = new VariableRecord(id, type, addrOrOffset, size, isAttri, attris);
+            	var = new VariableRecord(id, type, addrOrOffset, size, isAttri, nd, attris);
             }
             else if(type.equals("pointer")){
             	//pointers are not primitives.
@@ -430,7 +430,7 @@ class homework2 {
             		addrOrOffset = sumofSizesBefore; //offset
             	ADR += size;
             	/*
-            	 * two possiblities for where the pointsTo type
+            	 * two possibilities for where the pointsTo type
             	 * 1. none-primitive
             	 * (type).left.left
             	 * 
@@ -446,12 +446,10 @@ class homework2 {
             		//2. primitive
             		pointsTo = (declarations.right.right).left.value;
             	
-            	var = new VariablePointer(id, type, addrOrOffset, size, isAttri, pointsTo);	
+            	var = new VariablePointer(id, type, addrOrOffset, size, isAttri, nd, pointsTo);	
             }
             else {
             	//primitives
-            	
-            	
             	
             	size = 1;
             	if(!isAttri)
@@ -460,7 +458,7 @@ class homework2 {
             		addrOrOffset = sumofSizesBefore; //offset
             	
             	ADR += size;
-            	var = new Variable(id, type, addrOrOffset, size, isAttri);
+            	var = new Variable(id, type, addrOrOffset, size, isAttri, nd);
             }
             hash_entrance = hashFunction(id);
             hashTable.elementAt(hash_entrance).addLast(var);
