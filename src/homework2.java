@@ -185,29 +185,26 @@ class homework2 {
     	static int ADR=5; //address counter
     	final static int hashSize = 100;
         public static SymbolTable generateSymbolTable(AST tree){
-            // TODO: create SymbolTable from AST
-            hashTable = new Vector<LinkedList<Variable>>();
-            /*
-        	int dec_num = 0;
+        	// TODO: create SymbolTable from AST
+        	hashTable = new Vector<LinkedList<Variable>>();
+        	/*
+       		int dec_num = 0;
         	while(declarations!=null) { // counts the number of the variables
         		declarations=declarations.left;
         		dec_num++;
         	}            
             hashTable = new Vector<LinkedList<Variable>>(dec_num);
             */
-            hashTable = new Vector<LinkedList<Variable>>(SymbolTable.hashSize);
-            for(int i = 0; i < SymbolTable.hashSize; i++) {
-            	hashTable.addElement(new LinkedList<Variable>());
-            }
+            
+        	hashTable = new Vector<LinkedList<Variable>>(SymbolTable.hashSize);
+        	//set vector's size by adding #size cells
+        	for(int i = 0; i < SymbolTable.hashSize; i++) {
+        		hashTable.addElement(new LinkedList<Variable>()); 
+        	}
             
             
-            if(tree!=null && tree.right!=null &&tree.right.left!=null) {
-        		declarations = tree.right.left.left;
-            }
             
             
-            inputHandling(declarations, false);
-        	
             //printHashTable();
             /*
         	LinkedList<Variable> t;
@@ -294,10 +291,13 @@ class homework2 {
         	boolean isVoid = funcORproc.equals("procedure")? true : false;
         	String ret_varName = isVoid? "void" : idNparamaters.right.right.value;
         	
-        	//TODO: create parameters
+        	//TODO: create parameters (parametersList)
         	
-        	//TODO: create local vars
-        	int size = inputHandling(scope.left, false, nd + 1);
+        	
+        	
+        	//create local vars
+        	int size = inputHandling(scope.left, false, nd + 1, currFuncName);
+        	
         	
         	//create function variable himself, and add to hashTable
         	VariableFunction currFuncVar = new VariableFunction(currFuncName, type, 0, size, false,
@@ -313,13 +313,13 @@ class homework2 {
         	
         }
 
-        private static int inputHandling(AST declarations, boolean isAttri, int nd) {
+        private static int inputHandling(AST declarations, boolean isAttri, int nd, String nestingFunc) {
         	//coded - reads the declaration and add the new variable to the hashTable
         	//recursively goes over all declarationsList
         	//returns size of all the variables before it (for records). to set the offset
         	if(declarations == null) return 0;
         	
-        	int sumofSizesBefore = inputHandling(declarations.left, isAttri, nd);
+        	int sumofSizesBefore = inputHandling(declarations.left, isAttri, nd, nestingFunc);
         	
         	
         	int hash_entrance, size = 1, addrOrOffset;
@@ -375,8 +375,8 @@ class homework2 {
             	
             	
             	//subpart attribute is calculated with rangeList
-            	var = new VariableArray(id, type, addrOrOffset, size, isAttri, nd, g, dims_count, array_dims,
-            			typeElement, rangeList);
+            	var = new VariableArray(id, type, addrOrOffset, size, isAttri, nd, nestingFunc, 
+            			g, dims_count, array_dims, typeElement, rangeList);
             }
             else if(type.equals("record")){
             	//TODO
@@ -411,12 +411,12 @@ class homework2 {
             	
             	ourDeclarations = (declarations.right.right).left; //reset
             	//size of the record is the latest undefined attribute
-            	size = inputHandling(ourDeclarations,true, nd);
+            	size = inputHandling(ourDeclarations,true, nd, nestingFunc);
             	
             	//ADR += size;
             	//-- no need for "ADR+=" because the attributes does it for us
             	
-            	var = new VariableRecord(id, type, addrOrOffset, size, isAttri, nd, attris);
+            	var = new VariableRecord(id, type, addrOrOffset, size, isAttri, nd, nestingFunc, attris);
             }
             else if(type.equals("pointer")){
             	//pointers are not primitives.
@@ -446,7 +446,7 @@ class homework2 {
             		//2. primitive
             		pointsTo = (declarations.right.right).left.value;
             	
-            	var = new VariablePointer(id, type, addrOrOffset, size, isAttri, nd, pointsTo);	
+            	var = new VariablePointer(id, type, addrOrOffset, size, isAttri, nd, nestingFunc, pointsTo);	
             }
             else {
             	//primitives
@@ -458,7 +458,7 @@ class homework2 {
             		addrOrOffset = sumofSizesBefore; //offset
             	
             	ADR += size;
-            	var = new Variable(id, type, addrOrOffset, size, isAttri, nd);
+            	var = new Variable(id, type, addrOrOffset, size, isAttri, nd, nestingFunc);
             }
             hash_entrance = hashFunction(id);
             hashTable.elementAt(hash_entrance).addLast(var);
@@ -779,6 +779,11 @@ class homework2 {
     	AST firstStatement = ast.right.right;
     	code(firstStatement);
     	
+    	
+    	/* 
+    	 * 
+    	 * 
+    	*/
     	
     }
  
