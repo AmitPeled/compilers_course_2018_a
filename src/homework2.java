@@ -54,7 +54,8 @@ class homework2 {
     	int offset; //instead of address, in "attribute mode"
     	int size;
     	boolean isAttri;
-    	public Variable(String name,String type,int addrOrOffset, int size, boolean isAttri) {
+    	int nd; //nesting level of which the variable is defined
+    	public Variable(String name,String type,int addrOrOffset, int size, boolean isAttri, int nd) {
     		this.name=name;
     		this.type=type;
     		if(!isAttri){
@@ -68,6 +69,7 @@ class homework2 {
     		
     		this.size=size;
     		this.isAttri = isAttri;
+    		this.nd = nd;
     	}
     	public String getName() {return this.name;}
     	public String getType() {return this.type;}
@@ -82,8 +84,8 @@ class homework2 {
     	String pointsTo; //points to which type?
     	
     	public VariablePointer(String name,String type,int addrOrOffset, int size, boolean isAttri,
-    			String pointsTo){
-    		super(name, type, addrOrOffset, size, isAttri);
+    			int nd, String pointsTo){
+    		super(name, type, addrOrOffset, size, isAttri, nd);
     		this.pointsTo = pointsTo;
     	}
     	
@@ -98,8 +100,8 @@ class homework2 {
     	int subpart; // constant to each array
 
     	public VariableArray(String name,String type,int addrOrOffset, int size, boolean isAttri, 
-    			int g, int dim, int[] d_size, String typeElement, AST rangeList){
-    		super(name, type, addrOrOffset, size, isAttri);
+    			int nd, int g, int dim, int[] d_size, String typeElement, AST rangeList){
+    		super(name, type, addrOrOffset, size, isAttri, nd);
     		this.g = g;
     		this.dim = dim;
     		this.d_size = d_size; //the array was created in inputHandling. no need for deep copying
@@ -150,13 +152,31 @@ class homework2 {
     static class VariableRecord extends Variable{
     	String[] attris;
     	public VariableRecord(String name,String type,int addrOrOffset, int size, boolean isAttri, 
-    			String[] attris){
-    		super(name, type, addrOrOffset, size, isAttri);
+    			int nd, String[] attris){
+    		super(name, type, addrOrOffset, size, isAttri, nd);
     		this.attris = attris; //no need for deep copy
     	}
     	public String[] getAttris(){ return this.attris; }
     }
-
+    
+    static class VariableFunction extends Variable{
+    	String SL_varName; //our static link function's name
+    	String[] paraArr; //our function's paramaters' names
+    	String ret_varName; //the return value 'type'. not necessary because it can only be primitive
+    	
+    	public VariableFunction(String name,String type,int addrOrOffset, int size, boolean isAttri,
+    			int nd, String SL_varName, String[] paraArr, String ret_varName) {
+    		super(name, type, addrOrOffset, size, isAttri, nd);
+    		this.SL_varName = SL_varName;
+    		this.paraArr = paraArr; //low copy - used only here
+    		this.ret_varName = ret_varName;
+    	}
+    	
+    	public String getSL_varName() {return this.SL_varName;}
+    	public String[] getParaArr() {return this.paraArr;}
+    	public String gRet_varName() {return this.ret_varName;}
+    }
+    
     public static final class SymbolTable{
         // Think! what does a SymbolTable contain?
     	static Vector<LinkedList<Variable>> hashTable;
@@ -713,9 +733,9 @@ class homework2 {
     	}
     		
     	//else, do nothing
-    }
-    
-    
+    }	
+    	
+    	
     private static void generatePCode(AST ast, SymbolTable symbolTable) {
     	if(ast == null)
     		return;
