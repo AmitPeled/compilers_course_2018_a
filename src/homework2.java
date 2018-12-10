@@ -46,7 +46,8 @@ class homework2 {
         		this.right.setFathers(this);
         }
     }
-    static final class sepAdjusted{
+    
+    /*static final class sepAdjusted{
     	public static int sep;
         public static int curr_ep;
     	static void print(String s, boolean sepMode, int d) {
@@ -66,6 +67,7 @@ class homework2 {
     	   return sep;
         }
     }
+    */
     static class Variable{
         // Think! what does a Variable contain?
     	String name;
@@ -209,26 +211,24 @@ class homework2 {
         public static SymbolTable generateSymbolTable(AST tree){
         	// TODO: create SymbolTable from AST
         	hashTable = new Vector<LinkedList<Variable>>();
-        	/*
-       		int dec_num = 0;
-        	while(declarations!=null) { // counts the number of the variables
-        		declarations=declarations.left;
-        		dec_num++;
-        	}            
-            hashTable = new Vector<LinkedList<Variable>>(dec_num);
-            */
             
+        	//create #hashSize cells in hashTable.
+        	//maybe should count number of declarations, and then create the symbolTable
         	hashTable = new Vector<LinkedList<Variable>>(SymbolTable.hashSize);
         	//set vector's size by adding #size cells
         	for(int i = 0; i < SymbolTable.hashSize; i++) {
         		hashTable.addElement(new LinkedList<Variable>()); 
         	}
             
+            functionsList(tree, 0, null, true); //null - program has no SL
             
+        	
+        	
+        	
             
             
             //printHashTable();
-            /*
+            
         	LinkedList<Variable> t;
         	for(int i = 0; i < hashTable.size(); i++) {
         		t = hashTable.elementAt(i);
@@ -243,7 +243,7 @@ class homework2 {
         			
         		}
         	}
-            */
+            
             return null;
         }
         
@@ -268,21 +268,66 @@ class homework2 {
         	}
         }
         
-        public static Variable varById(String id, String nestingFunc) {
-        	//input: variable's name
-        	//output: variable's object
+        public static VariableFunction funcById(String funcName) {
+        	// funcById doesn't need nesting function for searching, because we assumed no duplicate
+        	// functions with the same name
+        	// just like the old 'varById'
         	
-        	LinkedList<Variable> t = hashTable.elementAt(hashFunction(id));
-        	Variable var;
+        	LinkedList<Variable> t = hashTable.elementAt(hashFunction(funcName));
+        	Variable var = null;
+        	boolean found = false;
         	for(int i = 0; i < t.size(); i++) {
         		var = t.get(i);
-        		if(var.name.equals(id)) {
-        			if(var.nestingFunc.equals(nestingFunc)) {
-        				return var;
-        			}
+        		if(var.name.equals(funcName) && var.type == "function") {
+        			found = true;
+        			break;
         		}
         	}
+        	if(found){
+        		if(var instanceof VariableFunction)
+        			return (VariableFunction)var;
+        		else
+        			System.out.println("ERROR: func variable is type 'function' but isn't instance"
+        					+ " of VariableFunction");
+        	}
         	return null;
+        }
+        
+        public static Variable varById(String id, String initNestingFunc) {
+        	//input: variable's name & nesting function
+        	//output: variable's object
+        	
+        	String nestingFuncName = initNestingFunc;
+        	Variable var, currNestingFunc = null;
+        	/*
+        	* varById is sometimes called from inputHandling, so initNestingFunc is not defined yet
+        	* because local vars are defined before the func herself.
+        	* for example:
+        	* function g:
+        	* c:int
+        	* b[1..2] of c
+        	* 
+        	* so we call varById("c","g") and g is not defined.
+        	* so currNestingFunc is null!
+        	*/
+        	boolean first = true;
+        	LinkedList<Variable> t = hashTable.elementAt(hashFunction(id)); //get entry's linkedList
+        	while(currNestingFunc != null || first) {
+        		for(int i = 0; i < t.size(); i++) {
+        			var = t.get(i);
+        			if(var.name.equals(id)) {
+        				if(var.nestingFunc.equals(nestingFuncName)) {
+        					return var;
+        				}
+        			}
+        		}
+        		first = false;
+        		//go look at the next nestingFunc
+        		currNestingFunc = funcById(nestingFuncName);
+        		nestingFuncName = currNestingFunc.nestingFunc; //get next SL
+        	}
+        	System.out.println("ERROR: varById, didn't find any variable");
+        	return null; //didn't found
         }
         
         public static void array_dims(AST rangeList, int[] array_dims, int i) {
@@ -302,44 +347,58 @@ class homework2 {
         	
         }
         
-        private static void functionsList(AST functions, int nd, String SL_varName) {
+        private static void functionsList(AST functions, int nd, String SL_varName, boolean isProgram) {
         	if(functions == null)
         		return;
-        	functionsList(functions.left, nd, SL_varName); //func-brothers are from down to up
         	
+        	System.out.println("DEBUG: functionsList");
         	
-        	AST currFunc = functions.right;
+        	if(!isProgram) //program doesn't have brothers
+        		functionsList(functions.left, nd, SL_varName, false); //func-brothers are from down to up
+        	
+        	AST currFunc;
+        	//if it's the first time we call functionsList. the functions = program node
+        	//otherwise, as usual (currFunc: right son of functionsList)
+        	if(!isProgram)
+        		currFunc = functions.right;
+        	else
+        		currFunc = functions;
+        	
         	AST idNparamaters = currFunc.left;
-        	AST scope = currFunc.right.left;
         	
-        	String funcORproc = currFunc.value; //"function" or "procedure"
+        	String funcORproc = currFunc.value; //"function" or "procedure" or "program"
         	String currFuncName = idNparamaters.left.left.value;
         	String type = "function";
-        	boolean isVoid = funcORproc.equals("procedure")? true : false;
+        	boolean isVoid = funcORproc.equals("function")? false : true; //program & procedure is void
         	String ret_varName = isVoid? "void" : idNparamaters.right.right.value;
         	
         	//TODO: create parameters (parametersList)
         	
         	
         	
+        	
+        	
         	//create local vars
+        	AST scope = currFunc.right.left;
+        	
         	int size = inputHandling(scope.left, false, nd + 1, currFuncName);
         	
         	
         	//create function variable himself, and add to hashTable
         	VariableFunction currFuncVar = new VariableFunction(currFuncName, type, 0, size, false,
-        			nd, SL_varName, null, ret_varName); //unfinished: parame is null
+        			nd, SL_varName, null, ret_varName, 0); //unfinished: parame is null, sep=0
         	int hash_entrance = hashFunction(currFuncName);
             hashTable.elementAt(hash_entrance).addLast(currFuncVar);
+        	
             
         	
         	//TODO: add nested functions to Symbol Table - recursive call!
-        	functionsList(scope.right, nd + 1, currFuncName); //create sons
+        	functionsList(scope.right, nd + 1, currFuncName, false); //create sons
         	
         	
         	
         }
-
+        
         private static int inputHandling(AST declarations, boolean isAttri, int nd, String nestingFunc) {
         	//coded - reads the declaration and add the new variable to the hashTable
         	//recursively goes over all declarationsList
@@ -374,7 +433,7 @@ class homework2 {
             	else
             		//2. primitive
             		typeElement = declarations.right.right.right.value;
-            	int g = typesize(typeElement); //size of the array's elements.
+            	int g = typesize(typeElement, nestingFunc); //size of the array's elements.
             	int dims_count = 0; //number of dimensions
             	int[] array_dims;
             	//count number of dimensions
@@ -505,16 +564,20 @@ class homework2 {
       
     }
     
-    public static int typesize(String type) {
+    public static int typesize(String type, String nestingFunc) {
     	
     	if(type.equals("int") || type.equals("boolean") || type.equals("pointer") || type.equals("real")) {
     		return 1;
     	}
-    	return SymbolTable.varById(type).size;
+    	return SymbolTable.varById(type, nestingFunc).size;
     	
     }
-  
-    private static void array_case(AST indexList, int[] dim_size, int dim_num, int curr_dim_num ,int size_type, String nestingFunc, boolean sepMode) { // handles ldc+ixa for each index accessed
+    
+    //too many errors - need to delete comment block
+    
+    /*
+    
+	private static void array_case(AST indexList, int[] dim_size, int dim_num, int curr_dim_num ,int size_type, String nestingFunc, boolean sepMode) { // handles ldc+ixa for each index accessed
     	if(indexList == null) {
     		return;
     	}
@@ -724,7 +787,7 @@ class homework2 {
     		codel(currStatement.left, nestingFunc, sepMode);
 			coder(currStatement.right, nestingFunc, sepMode);
     		sepAdjusted.print("sto", sepMode, (-2));
-    	}}
+    	}
     	else if(currStatement.value.equals("print")) {
     		coder(currStatement.left, sepMode);
     		if(!sepMode) {
@@ -799,7 +862,7 @@ class homework2 {
     		
     	//else, do nothing
     }	
-    	
+    
     
 
     private static void generatePCode(AST ast, SymbolTable symbolTable, String nestingFunc) {
@@ -837,7 +900,7 @@ class homework2 {
     }
     
    
-  
+  	*/
     
     
     public static void main(String[] args) {
@@ -845,7 +908,8 @@ class homework2 {
         AST ast = AST.createAST(scanner);
         ast.setFathers(null); //root has no father
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
-        generatePCode(ast, symbolTable, "p");
+        //generatePCode(ast, symbolTable, "p");
+        
     }
 
 }
