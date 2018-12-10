@@ -249,13 +249,18 @@ class homework2 {
         	}
         }
         
-        public static Variable varById(String id) {
+        public static Variable varById(String id, String nestingFunc) {
         	//input: variable's name
         	//output: variable's object
+        	
         	LinkedList<Variable> t = hashTable.elementAt(hashFunction(id));
+        	Variable var;
         	for(int i = 0; i < t.size(); i++) {
-        		if(t.get(i).name.equals(id)) {
-        			return t.get(i);
+        		var = t.get(i);
+        		if(var.name.equals(id)) {
+        			if(var.nestingFunc.equals(nestingFunc)) {
+        				return var;
+        			}
         		}
         	}
         	return null;
@@ -521,7 +526,7 @@ class homework2 {
     		String id = statements.left.value;
     		Variable var = SymbolTable.varById(id);
     		if(!var.isAttri)
-    			System.out.println("ldc " + var.address);
+    			System.out.println("lda "+ var.nd +' '+ var.address);
     		else
     			System.out.println("inc " + var.offset);
     		return var.name;
@@ -682,9 +687,9 @@ class homework2 {
     	System.out.println("ujp L" + case_label);
     }
     
-    private static void code(AST statements) {
+    private static void code(AST statements, String nestingFunc) { // nestingFunc is the func that contains the code
     	if(statements == null) return;
-    		code(statements.left); //code next statement (from down to up)
+    		code(statements.left, sepMode); //code next statement (from down to up)
     	
     	
     	AST currStatement = statements.right; //first operator of the statement
@@ -770,24 +775,46 @@ class homework2 {
     }	
     	
     	
-    private static void generatePCode(AST ast, SymbolTable symbolTable) {
+    private static void generatePCode(AST ast, SymbolTable symbolTable, String nestingFunc) {
     	if(ast == null)
     		return;
     	
     	//TODO: create new help function that call "code()" for each function
-    	
+    	Variable funcvar = SymbolTable.varById(ast.left.left.left.value, nestingFunc);
+    	System.out.println(funcvar.name + ':');
+    	int ssp = funcvar.size + ((VariableFunction)funcvar).paraArr.length + 5;
+    	System.out.println("ssp " + ssp);
+    	System.out.println("ujp " + funcvar.name + "_begin");
     	AST firstStatement = ast.right.right;
-    	code(firstStatement);
+    	handleFuncList(ast.right.left.right, symbolTable, funcvar);
+    	System.out.println(funcvar.name + "_begin:");
+    	code(firstStatement, funcvar.name);
+    	//System.out.println("ret" + );
     	
     	
+    	//what is the difference between retp and retf? how does the compiler calculates sep?
     }
- 
+    private static void handleFuncList(AST ast, SymbolTable symbolTable, Variable funcvar) {
+    	if(ast == null)
+    		return;
+    	handleFuncList(ast.left, symbolTable, funcvar);
+    	generatePCode(ast.right, symbolTable, funcvar.name);
+    }
+    private static int sepCalculation(AST statements) {
+    	int sep = 0;
+    	// simulate code. lda/ldc -> sep++; mult/add/sub->sep--; sto->sep-=2
+    	
+    	return sep;
+    }
+    
+    
+    
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         AST ast = AST.createAST(scanner);
         ast.setFathers(null); //root has no father
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
-        generatePCode(ast, symbolTable);
+        generatePCode(ast, symbolTable, "p");
     }
 
 }
