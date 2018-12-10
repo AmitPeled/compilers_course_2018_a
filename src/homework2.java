@@ -286,7 +286,7 @@ class homework2 {
         public static Variable varById(String id, String nestingFunc) {
         	//input: variable's name
         	//output: variable's object
-        	
+
         	LinkedList<Variable> t = hashTable.elementAt(hashFunction(id));
         	Variable var;
         	for(int i = 0; i < t.size(); i++) {
@@ -856,7 +856,8 @@ class homework2 {
         AST ast = AST.createAST(scanner);
         ast.setFathers(null); //root has no father
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
-        
+        Variable programFunc = SymbolTable.varById(ast.left.left.left.value, "none");
+        sepAdjusted.calcSep(ast, programFunc);  /** insert inside generateSymbolTable  **/
         generatePCode(ast, symbolTable, "p");
     }
 
