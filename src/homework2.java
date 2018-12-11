@@ -203,20 +203,26 @@ class homework2 {
     
     static class VariableFunction extends Variable{
     	//static link attribute is "nestingFunc" that all Variables has!
+    	String functionType; // function/procedure/program
     	String[] paraArr; //our function's parameters' names
     	String ret_varName; //the return value 'type'. not necessary because it can only be primitive
     	int sep;
     	
     	public VariableFunction(String name,String type,int addrOrOffset, int size, boolean isAttri,
-    			int nd, String SL_varName, String[] paraArr, String ret_varName, int sep) {
+    			int nd, String SL_varName, String functionType, String[] paraArr,
+    			String ret_varName, int sep) {
+    		
     		super(name, type, addrOrOffset, size, isAttri, nd, SL_varName);
+    		this.functionType = functionType;
     		this.paraArr = paraArr; //low copy - used only here
     		this.ret_varName = ret_varName;
     		this.sep = sep;
     	}
     	
+    	public String getFunctionType() {return this.functionType;}
     	public String[] getParaArr() {return this.paraArr;}
-    	public String gRet_varName() {return this.ret_varName;}
+    	public String getRet_varName() {return this.ret_varName;}
+    	public int getSep() {return this.sep;} 
     }
     
     public static final class SymbolTable{
@@ -368,8 +374,7 @@ class homework2 {
         	if(functions == null)
         		return;
         	
-        	System.out.println("DEBUG: functionsList");
-        	
+
         	if(!isProgram) //program doesn't have brothers
         		functionsList(functions.left, nd, SL_varName, false); //func-brothers are from down to up
         	
@@ -382,11 +387,10 @@ class homework2 {
         		currFunc = functions;
         	
         	AST idNparamaters = currFunc.left;
-        	
-        	String funcORproc = currFunc.value; //"function" or "procedure" or "program"
         	String currFuncName = idNparamaters.left.left.value;
         	String type = "function";
-        	boolean isVoid = funcORproc.equals("function")? false : true; //program & procedure is void
+        	String functionType = currFunc.value; //"function" or "procedure" or "program"
+        	boolean isVoid = functionType.equals("function")? false : true; //program & procedure is void
         	String ret_varName = isVoid? "void" : idNparamaters.right.right.value;
         	
         	//TODO: create parameters (parametersList)
@@ -396,24 +400,33 @@ class homework2 {
         	
         	
         	//create local vars
-        	AST scope = currFunc.right.left;
+
+        	AST content = currFunc.right;
+        	AST scope = null;
+        	if (content != null) { //content can be null!
+        		scope = content.left;
+        	}
+        	boolean noscope = true; //M MMM MM MM LLL L L L GG G G
+        	if(scope == null) //no local-vars & nested funcs
+        		noscope = true;
         	
-        	int size = inputHandling(scope.left, false, nd + 1, currFuncName);
-        	
+        	int size; //size's of function var will be size of local variables
+        	if(noscope == false)
+        		size = inputHandling(scope.left, false, nd + 1, currFuncName);
+        	else
+        		size = 0;
         	
         	//create function variable himself, and add to hashTable
         	VariableFunction currFuncVar = new VariableFunction(currFuncName, type, 0, size, false,
-        			nd, SL_varName, null, ret_varName, 0); //unfinished: parame is null, sep=0
+
+        			nd, SL_varName, functionType, null, ret_varName, 0); //unfinished: parame is null, sep=0
         	int hash_entrance = hashFunction(currFuncName);
             hashTable.elementAt(hash_entrance).addLast(currFuncVar);
         	
-            
-        	
         	//TODO: add nested functions to Symbol Table - recursive call!
-        	functionsList(scope.right, nd + 1, currFuncName, false); //create sons
-        	
-        	
-        	
+        	if(noscope == false) {
+        		functionsList(scope.right, nd + 1, currFuncName, false); //create sons
+        	}
         }
         
         private static int inputHandling(AST declarations, boolean isAttri, int nd, String nestingFunc) {
@@ -591,6 +604,7 @@ class homework2 {
     }
     
 	private static void array_case(AST indexList, int[] dim_size, int dim_num, int curr_dim_num ,int size_type, String nestingFunc) { // handles ldc+ixa for each index accessed
+
     	if(indexList == null) {
     		return;
     	}
@@ -912,9 +926,11 @@ class homework2 {
         ast.setFathers(null); //root has no father
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
 
+
         sepAdjusted.calcSep(ast);  /** insert inside generateSymbolTable  **/
 
         generatePCode(ast, symbolTable);
+
     }
 
 }
