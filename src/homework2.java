@@ -50,35 +50,38 @@ class homework2 {
     static final class sepAdjusted{
     	public static int sep;
         public static int curr_ep;
-    	static void print(String s, boolean sepMode, int d) {
+        private static boolean sepMode = false;
+        
+    	static void print(String s, int growth) {
     		if(sepMode) {
-    			curr_ep += d;
+    			curr_ep += growth;
     			sep = curr_ep > sep ? curr_ep : sep; // sep is maximum stack growth
     		}
     		else {
     			System.out.println(s);
     		}
     	}
-    	private static void calcSep(AST ast, Variable funcvar) {
+    	private static void calcSep(AST ast) {
     	
         	// lda/ldc -> sep++;
     		// mult/add/sub/and/or/ixa->sep--;
     		// sto->sep-=2; function call->sep+=correspondingFunc.sep
     		
-    	    calcNestedFuncs(ast.right.left.right, funcvar.name);
-    	    sepMode = true;
+    	    calcNestedFuncs(ast.right.left.right);
+    	    Variable funcvar = SymbolTable.funcById(ast.left.left.left.value);
     	    sep = 0;
     	    curr_ep = 0;
-    	    code(ast.right.right, funcvar.nestingFunc, true);
+    	    sepMode = true;
+    	    code(ast.right.right, funcvar.name);
     	    sepMode = false;
     	    ((VariableFunction)funcvar).sep = sep;
     	}
-    	private static void calcNestedFuncs(AST funcList, String nestingFunc) {
+    	private static void calcNestedFuncs(AST funcList) {
     		if(funcList == null)
     			return;
-    		calcNestedFuncs(funcList.left, nestingFunc);
-    		Variable funcvar = SymbolTable.varById(funcList.right.left.left.left.value, nestingFunc);
-    		calcSep(funcList.right, funcvar);
+    		calcNestedFuncs(funcList.left);
+    		Variable funcvar = SymbolTable.funcById(funcList.right.left.left.left.value);
+    		calcSep(funcList.right);
     	}
     }
     static class Variable{
@@ -297,6 +300,7 @@ class homework2 {
         	}
         }
         
+
         public static VariableFunction funcById(String funcName) {
         	// funcById doesn't need nesting function for searching, because we assumed no duplicate
         	// functions with the same name
@@ -380,6 +384,7 @@ class homework2 {
         	if(functions == null)
         		return;
         	
+
         	if(!isProgram) //program doesn't have brothers
         		functionsList(functions.left, nd, SL_varName, false); //func-brothers are from down to up
         	
@@ -405,6 +410,7 @@ class homework2 {
         	
         	
         	//create local vars
+
         	AST content = currFunc.right;
         	AST scope = null;
         	if (content != null) { //content can be null!
@@ -422,6 +428,7 @@ class homework2 {
         	
         	//create function variable himself, and add to hashTable
         	VariableFunction currFuncVar = new VariableFunction(currFuncName, type, 0, size, false,
+
         			nd, SL_varName, functionType, null, ret_varName, 0); //unfinished: parame is null, sep=0
         	int hash_entrance = hashFunction(currFuncName);
             hashTable.elementAt(hash_entrance).addLast(currFuncVar);
@@ -633,60 +640,61 @@ class homework2 {
     	
     }
     
-	private static void array_case(AST indexList, int[] dim_size, int dim_num, int curr_dim_num ,int size_type, String nestingFunc, boolean sepMode) { // handles ldc+ixa for each index accessed
+	private static void array_case(AST indexList, int[] dim_size, int dim_num, int curr_dim_num ,int size_type, String nestingFunc) { // handles ldc+ixa for each index accessed
+
     	if(indexList == null) {
     		return;
     	}
-    	array_case(indexList.left, dim_size, dim_num, curr_dim_num - 1, size_type, nestingFunc, sepMode);
+    	array_case(indexList.left, dim_size, dim_num, curr_dim_num - 1, size_type, nestingFunc);
 
-    	coder(indexList.right, nestingFunc, sepMode); // prints the index
+    	coder(indexList.right, nestingFunc); // prints the index
     	int N = 1;
     	for(int i = curr_dim_num + 1; i < dim_num; i++) {
     		N *= dim_size[i];
     	}
-    	sepAdjusted.print("ixa " + N*size_type, sepMode, (-1));
+    	sepAdjusted.print("ixa " + N*size_type, (-1));
 
     	
     }
-    private static void codei(AST indexList, VariableArray var, String nestingFunc, boolean sepMode) {
+    private static void codei(AST indexList, VariableArray var, String nestingFunc) {
     	
     	int dim_num = var.dim;
     	int[] dim_size = var.d_size;
     	int subpart = var.subpart;
     	int size_type = typesize(var.typeElement, nestingFunc);
     	
-    	array_case(indexList, dim_size, dim_num, dim_num - 1, size_type, nestingFunc, sepMode);
+    	array_case(indexList, dim_size, dim_num, dim_num - 1, size_type, nestingFunc);
     	
-    	sepAdjusted.print("dec " + subpart, sepMode, 0);
+    	sepAdjusted.print("dec " + subpart, 0);
     	return;
     }
     
     // prints code for address and return the type of that address
-    private static String codel(AST statements, String nestingFunc, boolean sepMode) {
+    private static String codel(AST statements, String nestingFunc) {
     	if(statements.value.equals("identifier")) {
     		String id = statements.left.value;
     		Variable var = SymbolTable.varById(id, nestingFunc);
     		if(!var.isAttri)
-    			sepAdjusted.print("lda "+ var.nd +' '+ var.address, sepMode, 1);
+    			sepAdjusted.print("lda "+ var.nd +' '+ var.address, 1);
     		else
-    			sepAdjusted.print("inc " + var.offset, sepMode, 0);
+    			sepAdjusted.print("inc " + var.offset, 0);
     		return var.name;
     	}
     	if(statements.value.equals("array")) {
-    		String name = codel(statements.left, nestingFunc, sepMode); // identifier of the array
+    		String name = codel(statements.left, nestingFunc); // identifier of the array
     		Variable var = SymbolTable.varById(name, nestingFunc);
     		VariableArray varArr = (VariableArray)var;
     		
     		// sends the beginning of array index's list +  the variable corresponding to the array
-    		codei(statements.right, varArr, nestingFunc, sepMode);
+    		codei(statements.right, varArr, nestingFunc);
     		
     		return varArr.getTypeElement();
     	}
 
     	if(statements.value.equals("pointer")) {
     		// operator^ (* in c++)
-    		String name = codel(statements.left, nestingFunc, sepMode);
-    		sepAdjusted.print("ind", sepMode, 0);
+    		String name = codel(statements.left, nestingFunc);
+    		sepAdjusted.print("ind", 0);
     		
     		Variable var = SymbolTable.varById(name, nestingFunc);
     		
@@ -694,8 +702,8 @@ class homework2 {
     	}
     	
     	if(statements.value.equals("record")) {
-    		codel(statements.left, nestingFunc, sepMode);
-    		String name = codel(statements.right, nestingFunc, sepMode);
+    		codel(statements.left, nestingFunc);
+    		String name = codel(statements.right, nestingFunc);
     		
     		return name;
     	}
@@ -703,172 +711,171 @@ class homework2 {
     	
     	
     	
-    	sepAdjusted.print("ERROR: codel couldn't find case for this case", sepMode, 0);
+    	sepAdjusted.print("ERROR: codel couldn't find case for this case", 0);
     	return null; //java-compiler wanted default return
     }
     
-    private static void coder(AST statements, String nestingFunc, boolean sepMode) {
+    private static void coder(AST statements, String nestingFunc) {
     	if(statements.value.equals("identifier")){
-    		codel(statements, nestingFunc, sepMode);
-    		sepAdjusted.print("ind", sepMode, 0);
+    		codel(statements, nestingFunc);
+    		sepAdjusted.print("ind", 0);
     	}
     	if(statements.value.equals("array")){
-    		codel(statements, nestingFunc, sepMode);
-    		sepAdjusted.print("ind", sepMode, 0);
+    		codel(statements, nestingFunc);
+    		sepAdjusted.print("ind", 0);
     	}
     	if(statements.value.equals("record")){
-    		codel(statements, nestingFunc, sepMode);
-    		sepAdjusted.print("ind", sepMode, 0);
+    		codel(statements, nestingFunc);
+    		sepAdjusted.print("ind", 0);
     	}
     	if(statements.value.equals("pointer")){
-    		codel(statements, nestingFunc, sepMode);
-    		sepAdjusted.print("ind", sepMode, 0);
+    		codel(statements, nestingFunc);
+    		sepAdjusted.print("ind", 0);
     	}
     	if(statements.value.equals("plus")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		coder(statements.right, nestingFunc, sepMode);
-    		sepAdjusted.print("add", sepMode, (-1));
+    		coder(statements.left, nestingFunc);
+    		coder(statements.right, nestingFunc);
+    		sepAdjusted.print("add", (-1));
     	}
     	if(statements.value.equals("multiply")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		coder(statements.right, nestingFunc, sepMode);
+    		coder(statements.left, nestingFunc);
+    		coder(statements.right, nestingFunc);
     		System.out.println("mul");
     	}
     	if(statements.value.equals("divide")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		coder(statements.right, nestingFunc, sepMode);
-    		sepAdjusted.print("div", sepMode, (-1));
+    		coder(statements.left, nestingFunc);
+    		coder(statements.right, nestingFunc);
+    		sepAdjusted.print("div", (-1));
     	}
     	if(statements.value.equals("minus")){
-    		coder(statements.left ,nestingFunc, sepMode);
-    		coder(statements.right ,nestingFunc, sepMode);
-    		sepAdjusted.print("sub", sepMode, (-1));
+    		coder(statements.left ,nestingFunc);
+    		coder(statements.right ,nestingFunc);
+    		sepAdjusted.print("sub", (-1));
     	}
     	if(statements.value.equals("negative")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		sepAdjusted.print("neg", sepMode, 0);
+    		coder(statements.left, nestingFunc);
+    		sepAdjusted.print("neg", 0);
     	}
     	if(statements.value.equals("constInt") || statements.value.equals("constReal")){
     		
-    		sepAdjusted.print("ldc " + statements.left.value, sepMode, 1);
+    		sepAdjusted.print("ldc " + statements.left.value, 1);
     	}
     	
     	//option 1 - no constBool before boolean value? :'(
     	if(statements.value.equals("false")){
-    		sepAdjusted.print("ldc 0", sepMode, 1);
+    		sepAdjusted.print("ldc 0", 1);
     	}
     	if(statements.value.equals("true")){
-    		sepAdjusted.print("ldc 1", sepMode, 1);
+    		sepAdjusted.print("ldc 1", 1);
     	}
     	//option 2 - constBool before boolean value.
     	if(statements.value.equals("constBool")){
     		if(statements.left.value.equals("false"))
-    			sepAdjusted.print("ldc 0", sepMode, 1);
+    			sepAdjusted.print("ldc 0", 1);
     		else
-    			sepAdjusted.print("ldc 1", sepMode, 1);
+    			sepAdjusted.print("ldc 1", 1);
     	}
     	
     	if(statements.value.equals("and")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		coder(statements.right, nestingFunc, sepMode);
-    		sepAdjusted.print("and", sepMode, (-1));
+    		coder(statements.left, nestingFunc);
+    		coder(statements.right, nestingFunc);
+    		sepAdjusted.print("and", (-1));
     	}
     	if(statements.value.equals("or")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		coder(statements.right, nestingFunc, sepMode);
-    		sepAdjusted.print("or", sepMode, (-1));
+    		coder(statements.left, nestingFunc);
+    		coder(statements.right, nestingFunc);
+    		sepAdjusted.print("or", (-1));
     	}
     	if(statements.value.equals("not")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		sepAdjusted.print("not", sepMode, 0);
+    		coder(statements.left, nestingFunc);
+    		sepAdjusted.print("not", 0);
     	}
     	
     	
     	if(statements.value.equals("notEquals")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		coder(statements.right, nestingFunc, sepMode);
-    		sepAdjusted.print("neq", sepMode, (-1));
+    		coder(statements.left, nestingFunc);
+    		coder(statements.right, nestingFunc);
+    		sepAdjusted.print("neq", (-1));
     	}
     	if(statements.value.equals("equals")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		coder(statements.right, nestingFunc, sepMode);
-    		sepAdjusted.print("equ", sepMode, (-1));
+    		coder(statements.left, nestingFunc);
+    		coder(statements.right, nestingFunc);
+    		sepAdjusted.print("equ", (-1));
     	}
     	if(statements.value.equals("greaterOrEquals")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		coder(statements.right, nestingFunc, sepMode);
-    		sepAdjusted.print("geq", sepMode, (-1));
+    		coder(statements.left, nestingFunc);
+    		coder(statements.right, nestingFunc);
+    		sepAdjusted.print("geq", (-1));
     	}
     	if(statements.value.equals("lessOrEquals")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		coder(statements.right, nestingFunc, sepMode);
-    		sepAdjusted.print("leq", sepMode, (-1));
+    		coder(statements.left, nestingFunc);
+    		coder(statements.right, nestingFunc);
+    		sepAdjusted.print("leq", (-1));
     	}
     	
     	if(statements.value.equals("greaterThan")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		coder(statements.right, nestingFunc, sepMode);
-    		sepAdjusted.print("grt", sepMode, (-1));
+    		coder(statements.left, nestingFunc);
+    		coder(statements.right, nestingFunc);
+    		sepAdjusted.print("grt", (-1));
     	}
     	if(statements.value.equals("lessThan")){
-    		coder(statements.left, nestingFunc, sepMode);
-    		coder(statements.right, nestingFunc, sepMode);
-    		sepAdjusted.print("les", sepMode, (-1));
+    		coder(statements.left, nestingFunc);
+    		coder(statements.right, nestingFunc);
+    		sepAdjusted.print("les", (-1));
     	}
     }
     
-    private static void codec(AST caseList, int switch_end_label, String nestingFunc, boolean sepMode) {
+    private static void codec(AST caseList, int switch_end_label, String nestingFunc) {
     	int case_label = AST.LAB++;
-    	sepAdjusted.print("L" + case_label + ":", sepMode, 0);
+    	sepAdjusted.print("L" + case_label + ":", 0);
     	if(caseList.right.right != null)
-    		code(caseList.right.right, nestingFunc, sepMode); //caseList->case->statementsList
-    	sepAdjusted.print("ujp L" + switch_end_label, sepMode, 0);
+    		code(caseList.right.right, nestingFunc); //caseList->case->statementsList
+    	sepAdjusted.print("ujp L" + switch_end_label, 0);
     	if(caseList.father.value.equals("caseList"))
-    		codec(caseList.father, switch_end_label, nestingFunc, sepMode); //call the next case
-    	sepAdjusted.print("ujp L" + case_label, sepMode, 0);
+    		codec(caseList.father, switch_end_label, nestingFunc); //call the next case
+    	sepAdjusted.print("ujp L" + case_label, 0);
     }
     
-    private static void code(AST statements, String nestingFunc, boolean sepMode) { // nestingFunc is the func that contains the code
+    private static void code(AST statements, String nestingFunc) { // nestingFunc is the func that contains the code
     	if(statements == null) return;
-    		code(statements.left, nestingFunc, sepMode); //code next statement (from down to up)
+    		code(statements.left, nestingFunc); //code next statement (from down to up)
     	
     	
     	AST currStatement = statements.right; //first operator of the statement
     	if(currStatement.value.equals("break")) {
     		int label = AST.loopLabStack.lastElement();
-    		sepAdjusted.print("ujp L" + label, sepMode, 0);
+    		sepAdjusted.print("ujp L" + label, 0);
     	}
     	if(currStatement.value.equals("assignment")) {
-    		codel(currStatement.left, nestingFunc, sepMode);
-			coder(currStatement.right, nestingFunc, sepMode);
-    		sepAdjusted.print("sto", sepMode, (-2));
+    		codel(currStatement.left, nestingFunc);
+			coder(currStatement.right, nestingFunc);
+    		sepAdjusted.print("sto", (-2));
     	}
     	else if(currStatement.value.equals("print")) {
-    		coder(currStatement.left, nestingFunc, sepMode);
-    		if(!sepMode) {
-    			sepAdjusted.print("print", sepMode, 0);
-    	}}
+    		coder(currStatement.left, nestingFunc);
+    		sepAdjusted.print("print", 0);
+    	}
     	else if(currStatement.value.equals("if")) {
     		if(currStatement.right.value.equals("else")) {
     			//if-else code:
     			int else_label = AST.LAB++;
     			int end_if_label = AST.LAB++;
-    			coder(currStatement.left, nestingFunc, sepMode); //condition
-    			sepAdjusted.print("fjp L" + else_label,sepMode, 0);
-    			code(currStatement.right.left, nestingFunc, sepMode); //if code
-    			sepAdjusted.print("ujp L" + end_if_label, sepMode, 0); //end of if-code scope
-    			sepAdjusted.print("L" + else_label + ":", sepMode, 0);
-    			code(currStatement.right.right, nestingFunc, sepMode); //else code
-    			sepAdjusted.print("L" + end_if_label + ":", sepMode, 0);
+    			coder(currStatement.left, nestingFunc); //condition
+    			sepAdjusted.print("fjp L" + else_label, 0);
+    			code(currStatement.right.left, nestingFunc); //if code
+    			sepAdjusted.print("ujp L" + end_if_label, 0); //end of if-code scope
+    			sepAdjusted.print("L" + else_label + ":", 0);
+    			code(currStatement.right.right, nestingFunc); //else code
+    			sepAdjusted.print("L" + end_if_label + ":", 0);
     		}
     		else {
     			//if code:
     			int end_if_label = AST.LAB++;
     			
-    			coder(currStatement.left, nestingFunc, sepMode); //condition
-    			sepAdjusted.print("fjp L" + end_if_label, sepMode, 0);
-    			code(currStatement.right, nestingFunc, sepMode);
-    			sepAdjusted.print("L" + end_if_label + ":", sepMode, 0);
+    			coder(currStatement.left, nestingFunc); //condition
+    			sepAdjusted.print("fjp L" + end_if_label, 0);
+    			code(currStatement.right, nestingFunc);
+    			sepAdjusted.print("L" + end_if_label + ":", 0);
     			
     		}
     			
@@ -878,11 +885,11 @@ class homework2 {
     		int end_while_label = AST.LAB++;
     		AST.loopLabStack.add(end_while_label);
 
-    		sepAdjusted.print("L" + currLab + ":", sepMode, 0);
-    		coder(currStatement.left, nestingFunc, sepMode);
-    		sepAdjusted.print("fjp L" + end_while_label, sepMode, 0);
-    		sepAdjusted.print("ujp L" + currLab, sepMode, 0);
-    		sepAdjusted.print("L" + end_while_label + ":", sepMode, 0);
+    		sepAdjusted.print("L" + currLab + ":", 0);
+    		coder(currStatement.left, nestingFunc);
+    		sepAdjusted.print("fjp L" + end_while_label, 0);
+    		sepAdjusted.print("ujp L" + currLab, 0);
+    		sepAdjusted.print("L" + end_while_label + ":", 0);
     		AST.loopLabStack.pop();
     	}
     	else if(currStatement.value.equals("switch")){
@@ -892,9 +899,9 @@ class homework2 {
     		
     		//1. create the code which is before the cases
     		int end_switch_label = AST.LAB++;
-    		coder(currStatement.left, nestingFunc, sepMode); //expression
-    		sepAdjusted.print("neg", sepMode, 0);
-    		sepAdjusted.print("ixj L"+end_switch_label, sepMode, 0);
+    		coder(currStatement.left, nestingFunc); //expression
+    		sepAdjusted.print("neg", 0);
+    		sepAdjusted.print("ixj L"+end_switch_label, 0);
     		
     		//2. find the deepest case (the first)
     		//and call the recursive function from there.
@@ -906,10 +913,10 @@ class homework2 {
     		else while(caseList.left != null){
     			caseList = caseList.left;
     		}
-    		codec(caseList, end_switch_label, nestingFunc, sepMode);
+    		codec(caseList, end_switch_label, nestingFunc);
     		
     		//3. just print the switch' label (codec also prints all the ujp at the end)
-    		sepAdjusted.print("L" + end_switch_label + ":", sepMode, 0);
+    		sepAdjusted.print("L" + end_switch_label + ":", 0);
     	}
 	
     	//else, do nothing
@@ -917,42 +924,37 @@ class homework2 {
     
     
 
-    private static void generatePCode(AST ast, SymbolTable symbolTable, String nestingFunc) {
+    private static void generatePCode(AST ast, SymbolTable symbolTable) {
     	if(ast == null)
     		return;
-    	
-    	//TODO: create new help function that call "code()" for each function
-    	Variable funcvar = SymbolTable.varById(ast.left.left.left.value, nestingFunc);
+   
+    	Variable funcvar = SymbolTable.funcById(ast.left.left.left.value);
     	System.out.println(funcvar.name + ':');
     	int ssp = funcvar.size + ((VariableFunction)funcvar).paraArr.length + 5;
     	System.out.println("ssp " + ssp);
-    	//calc sep
     	
-    	
-    	// sep_currfunc = sigma(g) {max(sep(g),num
     	System.out.println("sep " + ((VariableFunction)funcvar).sep);
     	System.out.println("ujp " + funcvar.name + "_begin");
     	AST firstStatement = ast.right.right;
-    	handleFuncList(ast.right.left.right, symbolTable, funcvar);
+    	handleFuncList(ast.right.left.right, symbolTable);
     	System.out.println(funcvar.name + "_begin:");
-    	code(firstStatement, funcvar.name, false);
-    	if(((VariableFunction)funcvar).equals("void")) {
-    		System.out.println("retp");
+    	code(firstStatement, funcvar.name);
+    	if(((VariableFunction)funcvar).ret_varName.equals("void")) {
+    		System.out.println("retp"); // funcvar is procedure
     	}
     	else System.out.println("retf");
     	
     	
-    	//how does the compiler calculates sep?
     }
-    private static void handleFuncList(AST ast, SymbolTable symbolTable, Variable funcvar) {
+    private static void handleFuncList(AST ast, SymbolTable symbolTable) {
     	if(ast == null)
     		return;
-    	handleFuncList(ast.left, symbolTable, funcvar);
-    	generatePCode(ast.right, symbolTable, funcvar.name);
+    	handleFuncList(ast.left, symbolTable);
+    	generatePCode(ast.right, symbolTable);
     }
     
    
-    private static boolean sepMode = false;
+ 
     
     
     public static void main(String[] args) {
@@ -960,7 +962,12 @@ class homework2 {
         AST ast = AST.createAST(scanner);
         ast.setFathers(null); //root has no father
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
-        generatePCode(ast, symbolTable, "p");
+
+
+        sepAdjusted.calcSep(ast);  /** insert inside generateSymbolTable  **/
+
+        generatePCode(ast, symbolTable);
+
     }
 
 }
