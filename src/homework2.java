@@ -364,8 +364,6 @@ class homework2 {
         	if(functions == null)
         		return;
         	
-        	System.out.println("DEBUG: functionsList");
-        	
         	if(!isProgram) //program doesn't have brothers
         		functionsList(functions.left, nd, SL_varName, false); //func-brothers are from down to up
         	
@@ -378,13 +376,11 @@ class homework2 {
         		currFunc = functions;
         	
         	AST idNparamaters = currFunc.left;
-        	
         	String funcORproc = currFunc.value; //"function" or "procedure" or "program"
         	String currFuncName = idNparamaters.left.left.value;
         	String type = "function";
         	boolean isVoid = funcORproc.equals("function")? false : true; //program & procedure is void
         	String ret_varName = isVoid? "void" : idNparamaters.right.right.value;
-        	
         	//TODO: create parameters (parametersList)
         	
         	
@@ -393,23 +389,25 @@ class homework2 {
         	
         	//create local vars
         	AST scope = currFunc.right.left;
+        	boolean noscope = true; //M MMM MM MM LLL L L L GG G G
+        	if(scope == null) //no local-vars & nested funcs
+        		noscope = true;
         	
-        	int size = inputHandling(scope.left, false, nd + 1, currFuncName);
-        	
-        	
+        	int size; //size's of function var will be size of local variables
+        	if(noscope == false)
+        		size = inputHandling(scope.left, false, nd + 1, currFuncName);
+        	else
+        		size = 0;
         	//create function variable himself, and add to hashTable
         	VariableFunction currFuncVar = new VariableFunction(currFuncName, type, 0, size, false,
         			nd, SL_varName, null, ret_varName, 0); //unfinished: parame is null, sep=0
         	int hash_entrance = hashFunction(currFuncName);
             hashTable.elementAt(hash_entrance).addLast(currFuncVar);
         	
-            
-        	
         	//TODO: add nested functions to Symbol Table - recursive call!
-        	functionsList(scope.right, nd + 1, currFuncName, false); //create sons
-        	
-        	
-        	
+        	if(noscope == false) {
+        		functionsList(scope.right, nd + 1, currFuncName, false); //create sons
+        	}
         }
         
         private static int inputHandling(AST declarations, boolean isAttri, int nd, String nestingFunc) {
