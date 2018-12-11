@@ -198,6 +198,16 @@ class homework2 {
     	public String[] getAttris(){ return this.attris; }
     }
     
+    static class VariableParameter extends Variable{
+    	boolean isByVar; //'by var' or 'by value'
+    	
+    	public VariableParameter(String name,String type,int addrOrOffset, int size, boolean isAttri,
+    			int nd, String nestingFunc, boolean isByVar) {
+    		super(name, type, addrOrOffset, size, isAttri, nd, nestingFunc);
+    		this.isByVar = isByVar;
+    	}
+    }
+    
     static class VariableFunction extends Variable{
     	//static link attribute is "nestingFunc" that all Variables has!
     	String functionType; // function/procedure/program
@@ -420,6 +430,33 @@ class homework2 {
         	if(noscope == false) {
         		functionsList(scope.right, nd + 1, currFuncName, false); //create sons
         	}
+        }
+        
+        private static void setFunctionsListSep(AST functions) {
+        	//TODO: go through all functions in AST and set for each 'sep' attr
+        	
+        	
+        }
+        
+        private static int parametersHandling(AST parameters, int nd, String nestingFunc) {
+        	//TODO: handle parametersList for given nesting function
+        	
+        	// parameters are different from local-vars. for example:
+        	// you can declare write b: r, although in inputHandling we didn't allow it
+        	// so weird :/
+        	
+        	if(parameters == null)
+        		return 0;
+        	int prevSize = parametersHandling(parameters.left, nd, nestingFunc);
+        	
+        	AST currParameter = parameters.right;
+        	boolean isByVar = (currParameter.value == "byReference")? true : false;
+        	String name = currParameter.left.left.value;
+        	String type = currParameter.right.value;
+        	
+        	
+        	
+        	return 0;
         }
         
         private static int inputHandling(AST declarations, boolean isAttri, int nd, String nestingFunc) {
