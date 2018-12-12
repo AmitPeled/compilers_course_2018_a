@@ -750,7 +750,7 @@ class homework2 {
     	sepAdjusted.print("ERROR: codel couldn't find case for this case", 0);
     	return null; //java-compiler wanted default return
     }
-    
+     
     private static void coder(AST statements, String nestingFunc) {
     	if(statements.value.equals("identifier")){
     		codel(statements, nestingFunc);
@@ -758,7 +758,6 @@ class homework2 {
     	}
     	if(statements.value.equals("call")) {
     		code(statements, nestingFunc);
-    		sepAdjusted.print("ind", 0);
     	}
     	if(statements.value.equals("array")){
     		codel(statements, nestingFunc);
@@ -989,7 +988,7 @@ class homework2 {
     private static void generatePCode(AST ast, SymbolTable symbolTable) {
     	if(ast == null)
     		return;
-   
+    	
     	Variable funcvar = SymbolTable.funcById(ast.left.left.left.value);
     	System.out.println(funcvar.name + ':');
     	int ssp = funcvar.size + ((VariableFunction)funcvar).paraArr.length + 5;
