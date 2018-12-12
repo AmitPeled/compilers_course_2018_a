@@ -92,10 +92,11 @@ class homework2 {
     	int offset; //instead of address, in "attribute mode"
     	int size;
     	boolean isAttri;
+    	boolean isByVar; //for parameters. parameters can be by Reference (var)
     	int nd; //nesting level of which the variable is defined
     	String nestingFunc; //the function that the variable is nested inside
     	public Variable(String name,String type,int addrOrOffset, int size, boolean isAttri,
-    			int nd, String nestingFunc) {
+    			boolean isByVar, int nd, String nestingFunc) {
     		this.name=name;
     		this.type=type;
     		if(!isAttri){
@@ -109,6 +110,7 @@ class homework2 {
     		
     		this.size=size;
     		this.isAttri = isAttri;
+    		this.isByVar = isByVar;
     		this.nd = nd;
     		this.nestingFunc = nestingFunc;
     	}
@@ -125,8 +127,8 @@ class homework2 {
     	String pointsTo; //points to which type?
     	
     	public VariablePointer(String name,String type,int addrOrOffset, int size, boolean isAttri,
-    			int nd, String nestingFunc, String pointsTo){
-    		super(name, type, addrOrOffset, size, isAttri, nd, nestingFunc);
+    			boolean isByVar, int nd, String nestingFunc, String pointsTo){
+    		super(name, type, addrOrOffset, size, isAttri, isByVar, nd, nestingFunc);
     		this.pointsTo = pointsTo;
     	}
     	
@@ -141,9 +143,9 @@ class homework2 {
     	int subpart; // constant to each array
 
     	public VariableArray(String name,String type,int addrOrOffset, int size, boolean isAttri, 
-    			int nd, String nestingFunc,
+    			boolean isByVar, int nd, String nestingFunc,
     			int g, int dim, int[] d_size, String typeElement, AST rangeList){
-    		super(name, type, addrOrOffset, size, isAttri, nd, nestingFunc);
+    		super(name, type, addrOrOffset, size, isAttri, isByVar, nd, nestingFunc);
     		this.g = g;
     		this.dim = dim;
     		this.d_size = d_size; //the array was created in inputHandling. no need for deep copying
@@ -194,23 +196,13 @@ class homework2 {
     static class VariableRecord extends Variable{
     	String[] attris;
     	public VariableRecord(String name,String type,int addrOrOffset, int size, boolean isAttri, 
-    			int nd, String nestingFunc, String[] attris){
-    		super(name, type, addrOrOffset, size, isAttri, nd, nestingFunc);
+    			boolean isByVar, int nd, String nestingFunc, String[] attris){
+    		super(name, type, addrOrOffset, size, isAttri, isByVar, nd, nestingFunc);
     		this.attris = attris; //no need for deep copy
     	}
     	public String[] getAttris(){ return this.attris; }
     }
-    
-    static class VariableParameter extends Variable{
-    	boolean isByVar; //'by var' or 'by value'
-    	
-    	public VariableParameter(String name,String type,int addrOrOffset, int size, boolean isAttri,
-    			int nd, String nestingFunc, boolean isByVar) {
-    		super(name, type, addrOrOffset, size, isAttri, nd, nestingFunc);
-    		this.isByVar = isByVar;
-    	}
-    }
-    
+
     static class VariableFunction extends Variable{
     	//static link attribute is "nestingFunc" that all Variables has!
     	String functionType; // function/procedure/program
@@ -219,10 +211,10 @@ class homework2 {
     	int sep;
     	
     	public VariableFunction(String name,String type,int addrOrOffset, int size, boolean isAttri,
-    			int nd, String SL_varName, String functionType, String[] paraArr,
+    			boolean isByVar, int nd, String SL_varName, String functionType, String[] paraArr,
     			String ret_varName, int sep) {
     		
-    		super(name, type, addrOrOffset, size, isAttri, nd, SL_varName);
+    		super(name, type, addrOrOffset, size, isAttri, isByVar, nd, SL_varName);
     		this.functionType = functionType;
     		this.paraArr = paraArr; //low copy - used only here
     		this.ret_varName = ret_varName;
@@ -272,7 +264,11 @@ class homework2 {
         			System.out.print("type: " + t.get(j).type + ", ");
         			System.out.print("address: " + t.get(j).address + ", ");
         			System.out.println("size: " + t.get(j).size);
-        			
+        			if(t.get(j).type.equals("function")){
+        				System.out.print("First parameter: ");
+        				if(((VariableFunction)(t.get(j))).paraArr.length > 0)
+        					System.out.println( ((VariableFunction)(t.get(j))).paraArr[0] );
+        			}
         		}
         	}
         	*/
@@ -384,7 +380,6 @@ class homework2 {
         	if(functions == null)
         		return;
         	
-
         	if(!isProgram) //program doesn't have brothers
         		functionsList(functions.left, nd, SL_varName, false); //func-brothers are from down to up
         	
@@ -402,39 +397,59 @@ class homework2 {
         	String functionType = currFunc.value; //"function" or "procedure" or "program"
         	boolean isVoid = functionType.equals("function")? false : true; //program & procedure is void
         	String ret_varName = isVoid? "void" : idNparamaters.right.right.value;
-        	
-        	//TODO: create parameters (parametersList)
-        	
-        	
-        	
-        	
-        	
-        	//create local vars
 
+        	
+        	
         	AST content = currFunc.right;
         	AST scope = null;
         	if (content != null) { //content can be null!
         		scope = content.left;
         	}
-        	boolean noscope = true; //M MMM MM MM LLL L L L GG G G
+        	boolean noscope = false; //M MMM MM MM LLL L L L GG G G
         	if(scope == null) //no local-vars & nested funcs
         		noscope = true;
         	
-        	int size; //size's of function var will be size of local variables
-        	if(noscope == false)
-        		size = inputHandling(scope.left, false, nd + 1, currFuncName);
+        	
+        	SymbolTable.ADR = 5; //adr reset. adr is relative to the current function
+        	//TODO: create parameters (parametersList)
+        	LinkedList<String> paramsNames = new LinkedList<String>();
+        	
+        	int paramsSize;
+        	if(idNparamaters.right != null){
+        		paramsSize = inputHandling(idNparamaters.right.left, false, nd + 1, currFuncName,
+        				true, paramsNames);
+        	}
         	else
-        		size = 0;
+        		paramsSize = 0;
+        	
+        	//create local vars
+
+        	int localVarsSize; //size's of function var will be size of local variables
+        	if(noscope == false)
+        		localVarsSize = inputHandling(scope.left, false, nd + 1, currFuncName, false, null);
+        	else
+        		localVarsSize = 0;
+        	
+        	
+        	int size = localVarsSize + paramsSize;
+        	
         	
         	//create function variable himself, and add to hashTable
+        	//don't forget: address=0
+        	
+        	//paramsNames: from LinkedList to array of strings
+        	String[] paraArr = new String[paramsNames.size()];
+        	for(int i=0; i<paraArr.length; i++) {
+        		paraArr[i] = paramsNames.get(i);
+        	}
+        	
         	VariableFunction currFuncVar = new VariableFunction(currFuncName, type, 0, size, false,
-
-        			nd, SL_varName, functionType, null, ret_varName, 0); //unfinished: parame is null, sep=0
+        			false, nd, SL_varName, functionType, paraArr, ret_varName, 0); //sep=0 for now
         	int hash_entrance = hashFunction(currFuncName);
             hashTable.elementAt(hash_entrance).addLast(currFuncVar);
         	
         	//TODO: add nested functions to Symbol Table - recursive call!
-        	if(noscope == false) {
+            if(noscope == false) {
         		functionsList(scope.right, nd + 1, currFuncName, false); //create sons
         	}
         }
@@ -445,43 +460,27 @@ class homework2 {
         	
         }
         
-        private static int parametersHandling(AST parameters, int nd, String nestingFunc) {
-        	//TODO: handle parametersList for given nesting function
-        	
-        	// parameters are different from local-vars. for example:
-        	// you can declare write b: r, although in inputHandling we didn't allow it
-        	// so weird :/
-        	
-        	if(parameters == null)
-        		return 0;
-        	int prevSize = parametersHandling(parameters.left, nd, nestingFunc);
-        	
-        	AST currParameter = parameters.right;
-        	boolean isByVar = (currParameter.value == "byReference")? true : false;
-        	String name = currParameter.left.left.value;
-        	String type = currParameter.right.value;
-        	
-        	
-        	
-        	return 0;
-        }
-        
-        private static int inputHandling(AST declarations, boolean isAttri, int nd, String nestingFunc) {
+        private static int inputHandling(AST declarations, boolean isAttri, int nd, String nestingFunc,
+        		boolean isParam, LinkedList<String> paramsNames) {
         	//coded - reads the declaration and add the new variable to the hashTable
         	//recursively goes over all declarationsList
         	//returns size of all the variables before it (for records). to set the offset
         	if(declarations == null) return 0;
         	
-        	int sumofSizesBefore = inputHandling(declarations.left, isAttri, nd, nestingFunc);
+        	int sumofSizesBefore = inputHandling(declarations.left, isAttri, nd, nestingFunc,
+        			isParam, paramsNames);
         	
         	
         	int hash_entrance, size = 1, addrOrOffset;
             String id,type;
             Variable var = null;
             
+            boolean isByVar = (declarations.right.value == "byReference"); //for parameters
+            
             
             id = declarations.right.left.left.value;
             type = declarations.right.right.value;
+            
             
             if(type.equals("array")) {
             	//TODO: prepare attributes for variableArray and call the constructor
@@ -528,8 +527,11 @@ class homework2 {
             	
             	
             	//subpart attribute is calculated with rangeList
-            	var = new VariableArray(id, type, addrOrOffset, size, isAttri, nd, nestingFunc, 
+            	var = new VariableArray(id, type, addrOrOffset, size, isAttri, isByVar, nd, nestingFunc, 
             			g, dims_count, array_dims, typeElement, rangeList);
+            	
+            	if(isParam)
+            		paramsNames.add(id);
             }
             else if(type.equals("record")){
             	//TODO
@@ -564,12 +566,17 @@ class homework2 {
             	
             	ourDeclarations = (declarations.right.right).left; //reset
             	//size of the record is the latest undefined attribute
-            	size = inputHandling(ourDeclarations,true, nd, nestingFunc);
+            	size = inputHandling(ourDeclarations, true, nd, nestingFunc, isParam, paramsNames);
             	
             	//ADR += size;
             	//-- no need for "ADR+=" because the attributes does it for us
             	
-            	var = new VariableRecord(id, type, addrOrOffset, size, isAttri, nd, nestingFunc, attris);
+            	var = new VariableRecord(id, type, addrOrOffset, size, isAttri, isByVar,
+            			nd, nestingFunc, attris);
+            	
+            	//I don't think you can define record inside of parameters but why not
+            	if(isParam) 
+            		paramsNames.add(id);
             }
             else if(type.equals("pointer")){
             	//pointers are not primitives.
@@ -599,7 +606,23 @@ class homework2 {
             		//2. primitive
             		pointsTo = (declarations.right.right).left.value;
             	
-            	var = new VariablePointer(id, type, addrOrOffset, size, isAttri, nd, nestingFunc, pointsTo);	
+            	var = new VariablePointer(id, type, addrOrOffset, size, isAttri, isByVar, 
+            			nd, nestingFunc, pointsTo);
+            	
+            	if(isParam)
+            		paramsNames.add(id);
+            }
+            else if(type.equals("identifier")) {
+            	//TODO: defined variable/parameter of the form b:a
+            	
+            	//maybe just for params, but nahh
+            	//for this kind of declaration:
+            	//b: a
+            	
+            	//(type).left.value
+            	String copiedVarName = (declarations.right.right).left.value;
+            	
+            	//copy constructor: (and then change the address)
             }
             else {
             	//primitives
@@ -611,7 +634,10 @@ class homework2 {
             		addrOrOffset = sumofSizesBefore; //offset
             	
             	ADR += size;
-            	var = new Variable(id, type, addrOrOffset, size, isAttri, nd, nestingFunc);
+            	var = new Variable(id, type, addrOrOffset, size, isAttri, isByVar, nd, nestingFunc);
+            	
+            	if(isParam)
+            		paramsNames.add(id);
             }
             hash_entrance = hashFunction(id);
             hashTable.elementAt(hash_entrance).addLast(var);
@@ -964,10 +990,9 @@ class homework2 {
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
 
 
-        sepAdjusted.calcSep(ast);  /** insert inside generateSymbolTable  **/
+        //sepAdjusted.calcSep(ast);  /** insert inside generateSymbolTable  **/
 
-        generatePCode(ast, symbolTable);
-
+        //generatePCode(ast, symbolTable);
     }
 
 }
