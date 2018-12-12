@@ -115,6 +115,25 @@ class homework2 {
     		this.nd = nd;
     		this.nestingFunc = nestingFunc;
     	}
+    	public Variable(Variable other, int addrOrOffset, boolean isAttri, int nd, String nestingFunc) {
+    		this.name=other.name;
+    		this.type=other.type;
+    		if(!isAttri){
+    			this.address = addrOrOffset;
+    			this.offset = -1;
+    		}
+    		else{
+    			this.address = -1;
+    			this.offset = addrOrOffset;
+    		}
+    		
+    		this.size=other.size;
+    		this.isAttri = isAttri;
+    		this.isByVar = other.isByVar;
+    		this.nd = nd;
+    		this.nestingFunc = nestingFunc;
+    	}
+    	
     	public String getName() {return this.name;}
     	public String getType() {return this.type;}
     	public int getAdrr() {return this.address;}
@@ -132,7 +151,11 @@ class homework2 {
     		super(name, type, addrOrOffset, size, isAttri, isByVar, nd, nestingFunc);
     		this.pointsTo = pointsTo;
     	}
-    	
+    	public VariablePointer(VariablePointer other, int addrOrOffset, boolean isAttri,
+    			int nd, String nestingFunc) {
+    		super(other, addrOrOffset, isAttri, nd, nestingFunc);
+    		this.pointsTo = other.pointsTo;
+    	}
     	public String getPointsTo(){ return this.pointsTo; }
     }
     
@@ -153,7 +176,18 @@ class homework2 {
     		this.typeElement = typeElement;
     		
     		this.subpart = calcSubpart(rangeList, dim - 1);
-    		
+    	}
+    	
+    	public VariableArray(VariableArray other, int addrOrOffset, boolean isAttri,
+    			int nd, String nestingFunc) {
+    		super(other, addrOrOffset, isAttri, nd, nestingFunc);
+    		this.g = other.g;
+    		this.dim = other.dim;
+    		this.d_size = new int[other.d_size.length];
+    		for(int i=0; i<this.d_size.length; i++)
+    			this.d_size[i] = other.d_size[i]; //deep copy
+    		this.typeElement = other.typeElement;
+    		this.subpart = other.subpart;
     	}
     	
     	public int calcSubpart(AST rangeList, int i) {
@@ -199,6 +233,11 @@ class homework2 {
     	public VariableRecord(String name,String type,int addrOrOffset, int size, boolean isAttri, 
     			boolean isByVar, int nd, String nestingFunc, String[] attris){
     		super(name, type, addrOrOffset, size, isAttri, isByVar, nd, nestingFunc);
+    		this.attris = attris; //no need for deep copy
+    	}
+    	public VariableRecord(VariableRecord other, int addrOrOffset, boolean isAttri,
+    			int nd, String nestingFunc) {
+    		super(other, addrOrOffset, isAttri, nd, nestingFunc);
     		this.attris = attris; //no need for deep copy
     	}
     	public String[] getAttris(){ return this.attris; }
