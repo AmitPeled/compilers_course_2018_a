@@ -756,6 +756,10 @@ class homework2 {
     		codel(statements, nestingFunc);
     		sepAdjusted.print("ind", 0);
     	}
+    	if(statements.value.equals("call")) {
+    		code(statements, nestingFunc);
+    		sepAdjusted.print("ind", 0);
+    	}
     	if(statements.value.equals("array")){
     		codel(statements, nestingFunc);
     		sepAdjusted.print("ind", 0);
@@ -871,12 +875,18 @@ class homework2 {
     		codec(caseList.father, switch_end_label, nestingFunc); //call the next case
     	sepAdjusted.print("ujp L" + case_label, 0);
     }
-	private static void handleArgs(AST argList, String nestingFunc) { // basic args_handling
+	private static void handleArgs(AST argList, String nestingFunc, String toFunc, int parameterNum) { // basic args_handling
 		if(argList == null)
 			return;
-		handleArgs(argList.left, nestingFunc);		
-		Variable var = SymbolTable.varById(codel(argList.right, nestingFunc), nestingFunc);
-		if(!var.isByVar) sepAdjusted.print("ind", 0);
+		handleArgs(argList.left, nestingFunc, toFunc, parameterNum - 1);
+		Variable func = SymbolTable.funcById(toFunc);
+		Variable var = SymbolTable.varById(((VariableFunction)func).paraArr[parameterNum], func.name); // getting the current parameter of the function
+		if(var.isByVar) {
+			codel(argList.right, nestingFunc);
+		}
+		else {
+			coder(argList.right, nestingFunc);
+		}
 	}
 
     private static void code(AST statements, String nestingFunc) { // nestingFunc is the func that contains the code
@@ -887,11 +897,11 @@ class homework2 {
     	AST currStatement = statements.right; //first operator of the statement
     	
     	if(currStatement.value.equals("call")) {
-    		Variable funcvar = SymbolTable.funcById(statements.left.left.value);
-    		Variable currfunc = SymbolTable.funcById(nestingFunc);
-    		sepAdjusted.print("mst "+ (funcvar.nd -1 - currfunc.nd), 0);
-    		handleArgs(statements.right, nestingFunc);
-    		sepAdjusted.print("cup "+ funcvar.nd + " " + funcvar.name, ((VariableFunction)funcvar).sep);
+    		Variable ToFunc = SymbolTable.funcById(statements.left.left.value);
+    		Variable FromFunc = SymbolTable.funcById(nestingFunc);
+    		sepAdjusted.print("mst "+ (ToFunc.nd -1 - FromFunc.nd), 0);
+    		handleArgs(statements.right, nestingFunc, ToFunc.name, ((VariableFunction)ToFunc).paraArr.length - 1);
+    		sepAdjusted.print("cup "+ ToFunc.nd + " " + ToFunc.name, ((VariableFunction)ToFunc).sep);
     	}
     	
     	if(currStatement.value.equals("break")) {
@@ -991,11 +1001,13 @@ class homework2 {
     	handleFuncList(ast.right.left.right, symbolTable);
     	System.out.println(funcvar.name + "_begin:");
     	code(firstStatement, funcvar.name);
-    	if(((VariableFunction)funcvar).ret_varName.equals("void")) {
-    		System.out.println("retp"); // funcvar is procedure
+    	if(((VariableFunction)funcvar).functionType.equals("procedure")) {
+    		System.out.println("retp"); 
     	}
-    	else System.out.println("retf");
-    	
+    	else if(((VariableFunction)funcvar).functionType.equals("function")) {
+    		System.out.println("retf");
+    	}
+    	else System.out.println("stp");
     	
     }
     private static void handleFuncList(AST ast, SymbolTable symbolTable) {
@@ -1018,7 +1030,7 @@ class homework2 {
 
         //sepAdjusted.calcSep(ast);  /** insert inside generateSymbolTable  **/
 
-        //generatePCode(ast, symbolTable);
+        generatePCode(ast, symbolTable);
     }
 
 }
