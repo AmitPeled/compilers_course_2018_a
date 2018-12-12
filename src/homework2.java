@@ -92,6 +92,7 @@ class homework2 {
     	int offset; //instead of address, in "attribute mode"
     	int size;
     	boolean isAttri;
+    	boolean isFunc = false;
     	int nd; //nesting level of which the variable is defined
     	String nestingFunc; //the function that the variable is nested inside
     	public Variable(String name,String type,int addrOrOffset, int size, boolean isAttri,
@@ -213,6 +214,7 @@ class homework2 {
     			String ret_varName, int sep) {
     		
     		super(name, type, addrOrOffset, size, isAttri, nd, SL_varName);
+    		this.isFunc = true;
     		this.functionType = functionType;
     		this.paraArr = paraArr; //low copy - used only here
     		this.ret_varName = ret_varName;
@@ -637,12 +639,20 @@ class homework2 {
     	if(statements.value.equals("identifier")) {
     		String id = statements.left.value;
     		Variable var = SymbolTable.varById(id, nestingFunc);
+    		Variable currfunc = SymbolTable.funcById(nestingFunc);
+    		if(var.isFunc)
+    			sepAdjusted.print("ldc " + var.name , 0);
     		if(!var.isAttri)
-    			sepAdjusted.print("lda "+ var.nd +' '+ var.address, 1);
+    			sepAdjusted.print("lda "+ (var.nd - currfunc.nd - 1 )+' '+ var.address, 1);
     		else
     			sepAdjusted.print("inc " + var.offset, 0);
     		return var.name;
     	}
+    	/*if(statements.value.equals("function")){
+    		Variable currfunc = SymbolTable.funcById(nestingFunc);
+    		sepAdjusted.print("ldc " + func.name, 1);
+    		sepAdjusted.print("lda " + (func.nd - currfunc.nd - 1) + " " + func.address, 1);
+    	}*/
     	if(statements.value.equals("array")) {
     		String name = codel(statements.left, nestingFunc); // identifier of the array
     		Variable var = SymbolTable.varById(name, nestingFunc);
@@ -798,13 +808,28 @@ class homework2 {
     		codec(caseList.father, switch_end_label, nestingFunc); //call the next case
     	sepAdjusted.print("ujp L" + case_label, 0);
     }
-    
+	private static void handleArgs(AST argList, String nestingFunc) { // basic args_handling
+		if(argList == null)
+			return;
+		handleArgs(argList.left, nestingFunc);
+		codel(argList.right, nestingFunc);
+	}
+
     private static void code(AST statements, String nestingFunc) { // nestingFunc is the func that contains the code
     	if(statements == null) return;
     		code(statements.left, nestingFunc); //code next statement (from down to up)
     	
     	
     	AST currStatement = statements.right; //first operator of the statement
+    	
+    	if(currStatement.value.equals("call")) {
+    		Variable funcvar = SymbolTable.funcById(statements.left.left.value);
+    		Variable currfunc = SymbolTable.funcById(nestingFunc);
+    		sepAdjusted.print("mst "+ (funcvar.nd -1 - currfunc.nd), 0);
+    		handleArgs(statements.right, nestingFunc);
+    		sepAdjusted.print("cup "+ funcvar.nd + " " + funcvar.name, ((VariableFunction)funcvar).sep);
+    	}
+    	
     	if(currStatement.value.equals("break")) {
     		int label = AST.loopLabStack.lastElement();
     		sepAdjusted.print("ujp L" + label, 0);
