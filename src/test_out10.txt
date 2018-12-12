@@ -1,0 +1,35 @@
+p:
+ssp 13
+sep 4
+ujp p_begin
+p_begin:
+lda 0 11
+ldc 1
+sto
+L2:
+lda 0 11
+ind
+ldc 2
+leq
+fjp L3
+ujp L2
+L3:
+lda 0 7
+ldc 1
+ixa 2
+dec 2
+ldc 1
+ixa 1
+dec 1
+ind
+lda 0 7
+ldc 2
+ixa 2
+dec 2
+ldc 2
+ixa 1
+dec 1
+ind
+add
+print
+stp

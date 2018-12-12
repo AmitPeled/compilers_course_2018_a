@@ -66,8 +66,9 @@ class homework2 {
         	// lda/ldc -> sep++;
     		// mult/add/sub/and/or/ixa->sep--;
     		// sto->sep-=2; function call->sep+=correspondingFunc.sep
-    		
-    	    calcNestedFuncs(ast.right.left.right);
+    		if(ast.right.left != null) { // scope node exists
+    			calcNestedFuncs(ast.right.left.right);
+    		}
     	    Variable funcvar = SymbolTable.funcById(ast.left.left.left.value);
     	    sep = 0;
     	    curr_ep = 0;
@@ -210,6 +211,7 @@ class homework2 {
     	String[] paraArr; //our function's parameters' names
     	String ret_varName; //the return value 'type'. not necessary because it can only be primitive
     	int sep;
+    	int sizePara;
     	
     	public VariableFunction(String name,String type,int addrOrOffset, int size, boolean isAttri,
     			boolean isByVar, int nd, String SL_varName, String functionType, String[] paraArr,
@@ -217,11 +219,16 @@ class homework2 {
     		
     		super(name, type, addrOrOffset, size, isAttri, isByVar, nd, SL_varName);
 			this.isFunc = true;
-
     		this.functionType = functionType;
     		this.paraArr = paraArr; //low copy - used only here
     		this.ret_varName = ret_varName;
     		this.sep = sep;
+    		this.sizePara = 0;
+    		Variable var;
+    		for(int i = 0; i < paraArr.length; i++) {
+    			var = SymbolTable.varById(paraArr[i], this.name);
+    			sizePara += var.size;
+    		}
     	}
     	
     	public String getFunctionType() {return this.functionType;}
@@ -705,10 +712,20 @@ class homework2 {
     		String id = statements.left.value;
     		Variable var = SymbolTable.varById(id, nestingFunc);
     		Variable currfunc = SymbolTable.funcById(nestingFunc);
-    		if(var.isFunc)
-    			sepAdjusted.print("ldc " + var.name , 0);
-    		if(!var.isAttri)
-    			sepAdjusted.print("lda "+ (var.nd - currfunc.nd - 1 )+' '+ var.address, 1);
+    		if(var.isFunc) {
+    			//sepAdjusted.print("ldc " + var.name , 0);
+    			if(var.name.equals(currfunc.name)) {
+    				sepAdjusted.print("lda 0 0", 1);
+    			}
+    			else {
+    				sepAdjusted.print("ldc " + var.name, 1);
+    				//add lda..
+    			}
+    		}
+    		else if(!var.isAttri) {
+    			//System.out.println("DEBUG: variable nd: " + var.nd + " function nd:" + currfunc.nd);
+    			sepAdjusted.print("lda "+ (currfunc.nd - var.nd + 1)+' '+ var.address, 1);
+    		}
     		else
     			sepAdjusted.print("inc " + var.offset, 0);
     		return var.name;
@@ -756,8 +773,8 @@ class homework2 {
     		codel(statements, nestingFunc);
     		sepAdjusted.print("ind", 0);
     	}
-    	if(statements.value.equals("call")) {
-    		code(statements, nestingFunc);
+    	if(statements.value.equals("call")) { // call handle for functions (with return value)
+    		callHandle(statements, nestingFunc);
     	}
     	if(statements.value.equals("array")){
     		codel(statements, nestingFunc);
@@ -874,7 +891,7 @@ class homework2 {
     		codec(caseList.father, switch_end_label, nestingFunc); //call the next case
     	sepAdjusted.print("ujp L" + case_label, 0);
     }
-	private static void handleArgs(AST argList, String nestingFunc, String toFunc, int parameterNum) { // basic args_handling
+	private static void handleArgs(AST argList, String nestingFunc, String toFunc, int parameterNum) { // basic args_handling		
 		if(argList == null)
 			return;
 		handleArgs(argList.left, nestingFunc, toFunc, parameterNum - 1);
@@ -887,20 +904,24 @@ class homework2 {
 			coder(argList.right, nestingFunc);
 		}
 	}
-
+	
+	private static void callHandle(AST currStatement, String nestingFunc) {
+		Variable ToFunc = SymbolTable.funcById(currStatement.left.left.value);
+		Variable FromFunc = SymbolTable.funcById(nestingFunc);
+		sepAdjusted.print("mst "+ (FromFunc.nd - ToFunc.nd + 1), 5);
+		handleArgs(currStatement.right, nestingFunc, ToFunc.name, ((VariableFunction)ToFunc).paraArr.length - 1);
+		
+		sepAdjusted.print("cup "+ ((VariableFunction)ToFunc).sizePara + " " + ToFunc.name, 0);
+	}
+	
     private static void code(AST statements, String nestingFunc) { // nestingFunc is the func that contains the code
     	if(statements == null) return;
     		code(statements.left, nestingFunc); //code next statement (from down to up)
-    	
-    	
+    	    		
     	AST currStatement = statements.right; //first operator of the statement
     	
     	if(currStatement.value.equals("call")) {
-    		Variable ToFunc = SymbolTable.funcById(statements.left.left.value);
-    		Variable FromFunc = SymbolTable.funcById(nestingFunc);
-    		sepAdjusted.print("mst "+ (ToFunc.nd -1 - FromFunc.nd), 0);
-    		handleArgs(statements.right, nestingFunc, ToFunc.name, ((VariableFunction)ToFunc).paraArr.length - 1);
-    		sepAdjusted.print("cup "+ ToFunc.nd + " " + ToFunc.name, ((VariableFunction)ToFunc).sep);
+    		callHandle(currStatement, nestingFunc); // for procedures
     	}
     	
     	if(currStatement.value.equals("break")) {
@@ -991,14 +1012,17 @@ class homework2 {
     	
     	Variable funcvar = SymbolTable.funcById(ast.left.left.left.value);
     	System.out.println(funcvar.name + ':');
-    	int ssp = funcvar.size + ((VariableFunction)funcvar).paraArr.length + 5;
+    	int ssp = funcvar.size + 5;
     	System.out.println("ssp " + ssp);
     	
     	System.out.println("sep " + ((VariableFunction)funcvar).sep);
     	System.out.println("ujp " + funcvar.name + "_begin");
-    	AST firstStatement = ast.right.right;
-    	handleFuncList(ast.right.left.right, symbolTable);
+    	if(ast.right.left != null) { // scope node exists
+    		handleFuncList(ast.right.left.right, symbolTable);
+    	}
+   
     	System.out.println(funcvar.name + "_begin:");
+    	AST firstStatement = ast.right.right;
     	code(firstStatement, funcvar.name);
     	if(((VariableFunction)funcvar).functionType.equals("procedure")) {
     		System.out.println("retp"); 
@@ -1027,7 +1051,7 @@ class homework2 {
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
 
 
-        //sepAdjusted.calcSep(ast);  /** insert inside generateSymbolTable  **/
+       // sepAdjusted.calcSep(ast);  /** insert inside generateSymbolTable  **/
 
         generatePCode(ast, symbolTable);
     }
