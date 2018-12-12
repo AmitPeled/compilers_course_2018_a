@@ -875,16 +875,23 @@ class homework2 {
     	sepAdjusted.print("ujp L" + case_label, 0);
     }
 	private static void handleArgs(AST argList, String nestingFunc, String toFunc, int parameterNum) { // basic args_handling
+		//handles arguments pushing right before 'cup' (before going to the called function).
 		if(argList == null)
 			return;
 		handleArgs(argList.left, nestingFunc, toFunc, parameterNum - 1);
 		Variable func = SymbolTable.funcById(toFunc);
-		Variable var = SymbolTable.varById(((VariableFunction)func).paraArr[parameterNum], func.name); // getting the current parameter of the function
-		if(var.isByVar) {
+		Variable varParam = SymbolTable.varById(((VariableFunction)func).paraArr[parameterNum], func.name); // getting the current parameter of the function
+		if(varParam.isByVar) {
 			codel(argList.right, nestingFunc);
 		}
 		else {
-			coder(argList.right, nestingFunc);
+			//non-var parameters. may push data > 1 (records & arrays)
+			if(varParam.type.equals("array") || varParam.type.equals("record")) {
+				codel(argList.right, nestingFunc);
+				sepAdjusted.print("movs " + varParam.size, varParam.size); //maybe problem with sep
+			}
+			else
+				coder(argList.right, nestingFunc);
 		}
 	}
 
