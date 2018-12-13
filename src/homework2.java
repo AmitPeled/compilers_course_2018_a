@@ -1016,16 +1016,16 @@ class homework2 {
 	private static void callHandle(AST currStatement, String nestingFunc) {
 		Variable ToFunc = SymbolTable.funcById(currStatement.left.left.value);
 		Variable FromFunc = SymbolTable.funcById(nestingFunc);
-		if(ToFunc.hasFuncPara) {
+		/*if(ToFunc.hasFuncPara) {
 			//sepAdjusted.print("mstf "+...
 		}
-		else sepAdjusted.print("mst "+ (FromFunc.nd - ToFunc.nd + 1), 5);
+		else*/ sepAdjusted.print("mst "+ (FromFunc.nd - ToFunc.nd + 1), 5);
 		
 		handleArgs(currStatement.right, nestingFunc, ToFunc.name, ((VariableFunction)ToFunc).paraArr.length - 1);
-		if(((VariableFunction)ToFunc).hasFuncPara) {
+		/*if(((VariableFunction)ToFunc).hasFuncPara) {
 			//sepAdjusted.print("cupi " +...
 		}
-		else sepAdjusted.print("cup "+ ((VariableFunction)ToFunc).sizePara + " " + ToFunc.name, 0);
+		else*/ sepAdjusted.print("cup "+ ((VariableFunction)ToFunc).sizePara + " " + ToFunc.name, 0);
 	}
 	
     private static void code(AST statements, String nestingFunc) { // nestingFunc is the func that contains the code
@@ -1057,7 +1057,7 @@ class homework2 {
     			int else_label = AST.LAB++;
     			int end_if_label = AST.LAB++;
     			coder(currStatement.left, nestingFunc); //condition
-    			sepAdjusted.print("fjp L" + else_label, 0);
+    			sepAdjusted.print("fjp L" + else_label, (-1));
     			code(currStatement.right.left, nestingFunc); //if code
     			sepAdjusted.print("ujp L" + end_if_label, 0); //end of if-code scope
     			sepAdjusted.print("L" + else_label + ":", 0);
