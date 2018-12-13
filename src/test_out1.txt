@@ -1,6 +1,6 @@
 p:
 ssp 8
-sep 3
+sep 0
 ujp p_begin
 p_begin:
 lda 0 5
@@ -14,8 +14,8 @@ les
 sto
 lda 0 7
 ind
-fjp L1
+fjp L0
 ldc 6
 print
-L1:
+L0:
 stp

@@ -1,6 +1,6 @@
 p:
 ssp 10
-sep 2
+sep 0
 ujp p_begin
 p_begin:
 lda 0 6

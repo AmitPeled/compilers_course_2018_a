@@ -1,53 +1,79 @@
-mul
 p:
 ssp 8
-sep 16
+sep 0
 ujp p_begin
 p_begin:
 lda 0 5
 ldc 5
 sto
-L9:
+L0:
 lda 0 5
 ind
 ldc 0
 grt
-fjp L10
-ujp L9
-L10:
+fjp L1
+lda 0 6
+ldc 1
+sto
+L2:
+lda 0 6
+ind
+lda 0 5
+ind
+les
+fjp L3
+lda 0 6
+ind
+print
+lda 0 6
+lda 0 6
+ind
+ldc 1
+add
+sto
+ujp L2
+L3:
+lda 0 5
+lda 0 5
+ind
+ldc 1
+sub
+sto
+ujp L0
+L1:
 ldc 0
-fjp L11
+fjp L4
 ldc 15
 print
-L11:
+L4:
 ldc 1
-fjp L12
+fjp L5
 ldc 42
 print
-ujp L13
-L12:
+ujp L6
+L5:
 ldc 16
 print
-L13:
+L6:
 ldc 2
 neg
-ixj L14
-L15:
+ixj L7
+L8:
 ldc 0
 print
-ujp L14
-L16:
-ujp L14
-L17:
+ujp L7
+L9:
+ujp L7
+L10:
 ldc 1
 print
 ldc 2
 print
-ujp L14
-ujp L17
-ujp L16
-ujp L15
-L14:
+ujp L7
+ujp L10
+ujp L9
+ujp L8
+L7:
 lda 0 5
 ldc 5
 ldc 6

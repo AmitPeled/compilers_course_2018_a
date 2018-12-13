@@ -1,21 +1,42 @@
 p:
 ssp 27
-sep 3
+sep 0
 ujp p_begin
 p_begin:
 lda 0 5
 inc 0
 ldc 1
 sto
-L2:
+L0:
 lda 0 5
 inc 0
 ind
 ldc 20
 leq
-fjp L3
-ujp L2
-L3:
+fjp L1
+lda 0 5
+inc 1
+inc 1
+inc 0
+lda 0 5
+inc 0
+ind
+ixa 1
+dec 1
+lda 0 5
+inc 0
+ind
+sto
+lda 0 5
+inc 0
+lda 0 5
+inc 0
+ind
+ldc 1
+add
+sto
+ujp L0
+L1:
 lda 0 5
 inc 1
 inc 1

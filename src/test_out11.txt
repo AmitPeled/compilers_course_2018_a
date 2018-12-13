@@ -1,10 +1,10 @@
 p:
 ssp 11
-sep 6
+sep 0
 ujp p_begin
 f:
 ssp 11
-sep 2
+sep 0
 ujp f_begin
 f_begin:
 lda 0 5
@@ -23,6 +23,6 @@ ldc 12
 sto
 mst 0
 lda 0 5
-ind
+movs 6
 cup 6 f
 stp

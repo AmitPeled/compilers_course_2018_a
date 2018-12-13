@@ -1,7 +1,6 @@
-mul
 p:
 ssp 7
-sep 4
+sep 0
 ujp p_begin
 p_begin:
 lda 0 5
@@ -11,15 +10,15 @@ lda 0 6
 ldc 5
 sto
 ldc 0
-fjp L2
+fjp L0
 lda 0 5
 lda 0 5
 ind
 ldc 6
 add
 sto
-ujp L3
-L2:
+ujp L1
+L0:
 lda 0 6
 ind
 ldc 10
@@ -27,7 +26,7 @@ lda 0 5
 ind
 mul
 sto
-L3:
+L1:
 lda 0 5
 ind
 print

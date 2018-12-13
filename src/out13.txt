@@ -1,20 +1,16 @@
-h:
+H:
 ssp 6
-sep 0
-ujp h_begin
-g:
+ujp H_begin
+G:
 ssp 7
-sep 0
-ujp g_begin
-f:
+ujp G_begin
+F:
 ssp 7
-sep 0
-ujp f_begin
-p:
+ujp F_begin
+P:
 ssp 7
-sep 0
-ujp p_begin
-p_begin:
+ujp P_begin
+P_begin:
 lda 0 6
 ldc 2
 sto
@@ -69,7 +65,7 @@ neq
 and
 sto
 retf
-f_begin:
+F_begin:
 lda 0 6
 ldc 2
 sto
@@ -89,7 +85,7 @@ fjp L3
 mst 0
 lda 0 6
 ind
-cup 1 p
+cup 1 P
 lda 0 5
 ind
 lda 0 5
@@ -126,7 +122,7 @@ L3:
 mst 0
 lda 0 5
 ind
-cup 1 p
+cup 1 P
 fjp L5
 lda 0 0
 lda 0 0
@@ -141,12 +137,12 @@ mul
 sto
 L5:
 retf
-g_begin:
+G_begin:
 lda 0 0
 mst 0
 lda 0 5
 ind
-cup 1 f
+cup 1 F
 sto
 lda 0 6
 ldc 1
@@ -178,7 +174,7 @@ ind
 mst 0
 lda 0 6
 ind
-cup 1 f
+cup 1 F
 add
 sto
 L8:
@@ -191,7 +187,7 @@ sto
 ujp L6
 L7:
 retf
-h_begin:
+H_begin:
 lda 0 5
 ldc 1
 sto
@@ -204,7 +200,7 @@ fjp L10
 mst 0
 lda 0 5
 ind
-cup 1 g
+cup 1 G
 print
 lda 0 5
 lda 0 5
