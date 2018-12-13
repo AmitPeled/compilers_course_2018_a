@@ -1,10 +1,8 @@
 DEBUG: after symbolTable
-mul
-mul
 DEBUG: after calaSep
 p:
 ssp 13
-sep 7
+sep 4
 ujp p_begin
 p_begin:
 lda 0 11

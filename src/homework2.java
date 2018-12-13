@@ -58,9 +58,7 @@ class homework2 {
     			sep = curr_ep > sep ? curr_ep : sep; // sep is maximum stack growth
     		}
     		else {
-    			
     			System.out.println(s);
-    			System.out.println("DEBUG: growth is " +growth);
     		}
     	}
     	private static void calcSep(AST ast) {
@@ -257,9 +255,10 @@ class homework2 {
     	int sep;
     	int sizePara;
     	boolean isDesc; //if this variable is actually a descriptor of function
+    	String realFuncName; //for handleArgs (I hate myself) -- if this is real func just copy the name
     	public VariableFunction(String name,String type,int addrOrOffset, int size, boolean isAttri,
     			boolean isByVar, int nd, String SL_varName, String functionType, String[] paraArr,
-    			String ret_varName, int sep, boolean isDesc) {
+    			String ret_varName, int sep, boolean isDesc, String realFuncName) {
     		
     		super(name, type, addrOrOffset, size, isAttri, isByVar, nd, SL_varName);
 			this.isFunc = true;
@@ -269,10 +268,11 @@ class homework2 {
     		this.sep = sep;
     		this.sizePara = 0; //will be set after params were defined
     		this.isDesc = isDesc; //isDescriptor. although, this constructor only called from real func'
+    		this.realFuncName = realFuncName;
     	}
     	
     	public VariableFunction(VariableFunction other, String name, int addrOrOffset, boolean isAttri,
-    			boolean isByVar, int nd, String SL_varName, boolean isDesc) {
+    			boolean isByVar, int nd, String SL_varName, boolean isDesc, String realFuncName) {
     		super(other, name, addrOrOffset, isAttri, isByVar, nd, SL_varName);
     		this.isFunc = true;
     		this.functionType = other.functionType;
@@ -281,7 +281,9 @@ class homework2 {
     		this.sep = other.sep;
     		this.sizePara = other.sizePara;
     		this.isDesc = isDesc;
-    		
+    		this.realFuncName = realFuncName;
+    		if(isDesc)
+    			this.size = 2;
     	}
     	
     	public void setRemainingAttrs(LinkedList<String> paramsNames, int size) {
@@ -496,7 +498,8 @@ class homework2 {
         	String[] paraArr = null; //will be set after the creation of the parameters
         	
         	VariableFunction currFuncVar = new VariableFunction(currFuncName, type, 0, size, false,
-        			false, nd, SL_varName, functionType, paraArr, ret_varName, 0, false); //sep=0 for now
+        			false, nd, SL_varName, functionType, paraArr, ret_varName, 0,
+        			false, currFuncName); //sep=0 for now
         	int hash_entrance = hashFunction(currFuncName);
             hashTable.elementAt(hash_entrance).addLast(currFuncVar);
         	
@@ -727,7 +730,9 @@ class homework2 {
             	}
             	else if(copiedVar instanceof VariableFunction) {
             		VariableFunction vf = (VariableFunction)copiedVar;
-            		var = new VariableFunction(vf, id, addrOrOffset, isAttri, isByVar, nd, nestingFunc, true);
+            		var = new VariableFunction(vf, id, addrOrOffset, isAttri, isByVar, nd, nestingFunc,
+            				true, vf.name);
+            		
             	}
             	else if(copiedVar instanceof Variable) {
             		var = new Variable(copiedVar, id, addrOrOffset, isAttri, isByVar, nd, nestingFunc);
@@ -1012,8 +1017,9 @@ class homework2 {
 		if(argList == null)
 			return;
 		handleArgs(argList.left, nestingFunc, toFunc, parameterNum - 1);
-		Variable func = SymbolTable.funcById(toFunc);
-		Variable varParam = SymbolTable.varById(((VariableFunction)func).paraArr[parameterNum], func.name); // getting the current parameter of the function
+		VariableFunction func = (VariableFunction)SymbolTable.funcById(toFunc);
+		Variable varParam = SymbolTable.varById(((VariableFunction)func).paraArr[parameterNum],
+				func.realFuncName); // getting the current parameter of the function
 		if(varParam.isByVar) {
 			codel(argList.right, nestingFunc);
 		}
@@ -1032,12 +1038,14 @@ class homework2 {
 	}
 	
 	private static void callHandle(AST currStatement, String nestingFunc) {
-		Variable ToFunc = SymbolTable.funcById(currStatement.left.left.value);
-		Variable FromFunc = SymbolTable.funcById(nestingFunc);
-		/*if(ToFunc.hasFuncPara) {
-			//sepAdjusted.print("mstf "+...
+		VariableFunction ToFunc = (VariableFunction)SymbolTable.funcById(currStatement.left.left.value);
+		VariableFunction FromFunc = (VariableFunction)SymbolTable.funcById(nestingFunc);
+		
+		if(ToFunc.isDesc) {
+			sepAdjusted.print("mstf " + (FromFunc.nd - ToFunc.nd + 1) + " " + ToFunc.address, 5);
 		}
-		else*/ sepAdjusted.print("mst "+ (FromFunc.nd - ToFunc.nd + 1), 5);
+		else
+			sepAdjusted.print("mst "+ (FromFunc.nd - ToFunc.nd + 1), 5);
 		
 		handleArgs(currStatement.right, nestingFunc, ToFunc.name, ((VariableFunction)ToFunc).paraArr.length - 1);
 		/*if(((VariableFunction)ToFunc).hasFuncPara) {
@@ -1045,9 +1053,24 @@ class homework2 {
 		}
 		*/
 		if(((VariableFunction)ToFunc).ret_varName.equals("void")) {
-			sepAdjusted.print("cup "+ ((VariableFunction)ToFunc).sizePara + " " + ToFunc.name, -(((VariableFunction)ToFunc).sizePara + 5));
+			if(!ToFunc.isDesc)
+				sepAdjusted.print("cup " + ToFunc.sizePara + " " + ToFunc.name,
+						-(((VariableFunction)ToFunc).sizePara + 5));
+			else {
+				sepAdjusted.print("smp " + ToFunc.sizePara, 0); //I hope so
+				sepAdjusted.print("cupi " + (FromFunc.nd - ToFunc.nd) + " " + ToFunc.address,
+						-(((VariableFunction)ToFunc).sizePara + 5));
+			}
 		}
-		else sepAdjusted.print("cup "+ ((VariableFunction)ToFunc).sizePara + " " + ToFunc.name, -(((VariableFunction)ToFunc).sizePara + 4));
+		else
+			if(!ToFunc.isDesc)
+				sepAdjusted.print("cup "+ ((VariableFunction)ToFunc).sizePara + " " + ToFunc.name,
+					-(((VariableFunction)ToFunc).sizePara + 4));
+			else {
+				sepAdjusted.print("smp " + ToFunc.sizePara, 0); //I hope so
+				sepAdjusted.print("cupi " + (FromFunc.nd - ToFunc.nd) + " " + ToFunc.address,
+						-(((VariableFunction)ToFunc).sizePara + 4));
+			}
 	}
 	
     private static void code(AST statements, String nestingFunc) { // nestingFunc is the func that contains the code

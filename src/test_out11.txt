@@ -2,7 +2,7 @@ DEBUG: after symbolTable
 DEBUG: after calaSep
 p:
 ssp 11
-sep 12
+sep 11
 ujp p_begin
 f:
 ssp 11
