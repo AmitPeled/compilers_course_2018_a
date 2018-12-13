@@ -325,7 +325,7 @@ class homework2 {
             
             
             //printHashTable();
-            
+            /*
         	LinkedList<Variable> t;
         	for(int i = 0; i < hashTable.size(); i++) {
         		t = hashTable.elementAt(i);
@@ -344,7 +344,7 @@ class homework2 {
         			}
         		}
         	}
-        	
+        	*/
             return null;
         }
         
