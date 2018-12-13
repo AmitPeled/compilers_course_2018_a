@@ -1,0 +1,34 @@
+mul
+p:
+ssp 7
+sep 4
+ujp p_begin
+p_begin:
+lda 0 5
+ldc 10
+sto
+lda 0 6
+ldc 5
+sto
+ldc 0
+fjp L2
+lda 0 5
+lda 0 5
+ind
+ldc 6
+add
+sto
+ujp L3
+L2:
+lda 0 6
+ind
+ldc 10
+lda 0 5
+ind
+mul
+sto
+L3:
+lda 0 5
+ind
+print
+stp
