@@ -254,10 +254,10 @@ class homework2 {
     	String ret_varName; //the return value 'type'. not necessary because it can only be primitive
     	int sep;
     	int sizePara;
-    	
+    	boolean isDesc; //if this variable is actually a descriptor of function
     	public VariableFunction(String name,String type,int addrOrOffset, int size, boolean isAttri,
     			boolean isByVar, int nd, String SL_varName, String functionType, String[] paraArr,
-    			String ret_varName, int sep) {
+    			String ret_varName, int sep, boolean isDesc) {
     		
     		super(name, type, addrOrOffset, size, isAttri, isByVar, nd, SL_varName);
 			this.isFunc = true;
@@ -266,11 +266,11 @@ class homework2 {
     		this.ret_varName = ret_varName;
     		this.sep = sep;
     		this.sizePara = 0; //will be set after params were defined
-    		
+    		this.isDesc = isDesc; //isDescriptor. although, this constructor only called from real func'
     	}
     	
     	public VariableFunction(VariableFunction other, String name, int addrOrOffset, boolean isAttri,
-    			boolean isByVar, int nd, String SL_varName) {
+    			boolean isByVar, int nd, String SL_varName, boolean isDesc) {
     		super(other, name, addrOrOffset, isAttri, isByVar, nd, SL_varName);
     		this.isFunc = true;
     		this.functionType = other.functionType;
@@ -278,6 +278,7 @@ class homework2 {
     		this.ret_varName = other.ret_varName;
     		this.sep = other.sep;
     		this.sizePara = other.sizePara;
+    		this.isDesc = isDesc;
     		
     	}
     	
@@ -493,7 +494,7 @@ class homework2 {
         	String[] paraArr = null; //will be set after the creation of the parameters
         	
         	VariableFunction currFuncVar = new VariableFunction(currFuncName, type, 0, size, false,
-        			false, nd, SL_varName, functionType, paraArr, ret_varName, 0); //sep=0 for now
+        			false, nd, SL_varName, functionType, paraArr, ret_varName, 0, false); //sep=0 for now
         	int hash_entrance = hashFunction(currFuncName);
             hashTable.elementAt(hash_entrance).addLast(currFuncVar);
         	
@@ -722,6 +723,10 @@ class homework2 {
             		VariableRecord vr = (VariableRecord)copiedVar;
             		var = new VariableRecord(vr, id, addrOrOffset, isAttri, isByVar, nd, nestingFunc);
             	}
+            	else if(copiedVar instanceof VariableFunction) {
+            		VariableFunction vf = (VariableFunction)copiedVar;
+            		var = new VariableFunction(vf, id, addrOrOffset, isAttri, isByVar, nd, nestingFunc, true);
+            	}
             	else if(copiedVar instanceof Variable) {
             		var = new Variable(copiedVar, id, addrOrOffset, isAttri, isByVar, nd, nestingFunc);
             	}
@@ -812,14 +817,22 @@ class homework2 {
     		Variable var = SymbolTable.varById(id, nestingFunc);
     		Variable currfunc = SymbolTable.funcById(nestingFunc);
     		if(var.isFunc) {
-    			//sepAdjusted.print("ldc " + var.name , 0);
-    			if(var.name.equals(currfunc.name)) {
+    			VariableFunction varFunc = (VariableFunction)var;
+    			if(var.name.equals(currfunc.name))
     				sepAdjusted.print("lda 0 0", 1);
-    			}
     			else {
-    				sepAdjusted.print("ldc " + var.name, 1);
-    				//add lda..
+    				if(!varFunc.isDesc) {
+    					//create descriptor:
+    					sepAdjusted.print("ldc " + var.name, 1);
+    					sepAdjusted.print("lda " + (currfunc.nd - var.nd + 1) + " 1", 1);
+    				}
+    				else {
+    					sepAdjusted.print("lda " + (currfunc.nd - var.nd + 1) + var.address, 1);
+    					sepAdjusted.print("movs 2", 2 - 1);
+    				}
+    					
     			}
+    				
     		}
     		else if(!var.isAttri) { //regular variable
     			sepAdjusted.print("lda "+ (currfunc.nd - var.nd + 1)+' '+ var.address, 1);
@@ -1007,6 +1020,9 @@ class homework2 {
 			if(varParam.type.equals("array") || varParam.type.equals("record")) {
 				codel(argList.right, nestingFunc);
 				sepAdjusted.print("movs " + varParam.size, varParam.size); //maybe problem with sep
+			}
+			else if(varParam.type.equals("function")) {
+				codel(argList.right,  nestingFunc); 
 			}
 			else
 				coder(argList.right, nestingFunc);
