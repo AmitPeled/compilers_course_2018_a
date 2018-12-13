@@ -1,0 +1,137 @@
+h:
+ssp 6
+sep 0
+ujp h_begin
+g:
+ssp 7
+sep 0
+ujp g_begin
+f:
+ssp 7
+sep 0
+ujp f_begin
+p:
+ssp 7
+sep 0
+ujp p_begin
+p_begin:
+lda 0 6
+ldc 2
+sto
+L0:
+lda 0 6
+ind
+lda 0 6
+ind
+mul
+lda 0 5
+ind
+leq
+lda 0 5
+ind
+lda 0 5
+ind
+lda 0 6
+ind
+div
+lda 0 6
+ind
+mul
+neq
+and
+fjp L1
+ujp L0
+L1:
+lda 0 0
+lda 0 6
+ind
+lda 0 6
+ind
+mul
+lda 0 5
+ind
+grt
+lda 0 5
+ind
+ldc 4
+neq
+and
+lda 0 5
+ind
+ldc 1
+neq
+and
+sto
+retf
+f_begin:
+lda 0 6
+ldc 2
+sto
+lda 0 0
+lda 0 5
+ind
+sto
+L2:
+lda 0 6
+ind
+lda 0 5
+ind
+ldc 2
+div
+leq
+fjp L3
+ujp L2
+L3:
+mst 0
+lda 0 5
+ind
+cup 1 p
+fjp L4
+lda 0 0
+lda 0 0
+ind
+ldc 1
+ldc 1.000000
+lda 0 5
+ind
+div
+sub
+mul
+sto
+L4:
+retf
+g_begin:
+lda 0 0
+mst 0
+lda 0 5
+ind
+cup 1 f
+sto
+lda 0 6
+ldc 1
+sto
+L5:
+lda 0 6
+ind
+lda 0 5
+ind
+ldc 2
+div
+leq
+fjp L6
+ujp L5
+L6:
+retf
+h_begin:
+lda 0 5
+ldc 1
+sto
+L7:
+lda 0 5
+ind
+ldc 13
+leq
+fjp L8
+ujp L7
+L8:
+stp
