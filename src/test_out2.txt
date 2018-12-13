@@ -1,6 +1,9 @@
+DEBUG: after symbolTable
+mul
+DEBUG: after calaSep
 p:
 ssp 7
-sep 0
+sep 4
 ujp p_begin
 p_begin:
 lda 0 5
@@ -10,15 +13,15 @@ lda 0 6
 ldc 5
 sto
 ldc 0
-fjp L0
+fjp L2
 lda 0 5
 lda 0 5
 ind
 ldc 6
 add
 sto
-ujp L1
-L0:
+ujp L3
+L2:
 lda 0 6
 ind
 ldc 10
@@ -26,7 +29,7 @@ lda 0 5
 ind
 mul
 sto
-L1:
+L3:
 lda 0 5
 ind
 print

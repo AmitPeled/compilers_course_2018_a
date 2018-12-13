@@ -1,6 +1,8 @@
+DEBUG: after symbolTable
+DEBUG: after calaSep
 a:
 ssp 57
-sep 0
+sep 4
 ujp a_begin
 a_begin:
 lda 0 5

@@ -1,0 +1,2 @@
+DEBUG: after symbolTable
+ERROR: func variable is type 'function' but isn't instance of VariableFunction
