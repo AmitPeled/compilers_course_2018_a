@@ -955,9 +955,16 @@ class homework2 {
 	private static void callHandle(AST currStatement, String nestingFunc) {
 		Variable ToFunc = SymbolTable.funcById(currStatement.left.left.value);
 		Variable FromFunc = SymbolTable.funcById(nestingFunc);
-		sepAdjusted.print("mst "+ (FromFunc.nd - ToFunc.nd + 1), 5);
+		if(ToFunc.hasFuncPara) {
+			//sepAdjusted.print("mstf "+...
+		}
+		else sepAdjusted.print("mst "+ (FromFunc.nd - ToFunc.nd + 1), 5);
+		
 		handleArgs(currStatement.right, nestingFunc, ToFunc.name, ((VariableFunction)ToFunc).paraArr.length - 1);
-		sepAdjusted.print("cup "+ ((VariableFunction)ToFunc).sizePara + " " + ToFunc.name, 0);
+		if(((VariableFunction)ToFunc).hasFuncPara) {
+			//sepAdjusted.print("cupi " +...
+		}
+		else sepAdjusted.print("cup "+ ((VariableFunction)ToFunc).sizePara + " " + ToFunc.name, 0);
 	}
 	
     private static void code(AST statements, String nestingFunc) { // nestingFunc is the func that contains the code
