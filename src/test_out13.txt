@@ -1,24 +1,33 @@
+DEBUG: after symbolTable
+mul
+mul
+mul
+mul
+mul
+mul
+mul
+DEBUG: after calaSep
 h:
 ssp 6
-sep 0
+sep 10
 ujp h_begin
 g:
 ssp 7
-sep 0
+sep 16
 ujp g_begin
 f:
 ssp 7
-sep 0
+sep 20
 ujp f_begin
 p:
 ssp 7
-sep 0
+sep 8
 ujp p_begin
 p_begin:
 lda 0 6
 ldc 2
 sto
-L0:
+L11:
 lda 0 6
 ind
 lda 0 6
@@ -39,15 +48,15 @@ ind
 mul
 neq
 and
-fjp L1
+fjp L12
 lda 0 6
 lda 0 6
 ind
 ldc 1
 add
 sto
-ujp L0
-L1:
+ujp L11
+L12:
 lda 0 0
 lda 0 6
 ind
@@ -77,7 +86,7 @@ lda 0 0
 lda 0 5
 ind
 sto
-L2:
+L13:
 lda 0 6
 ind
 lda 0 5
@@ -85,7 +94,7 @@ ind
 ldc 2
 div
 leq
-fjp L3
+fjp L14
 mst 0
 lda 0 6
 ind
@@ -102,7 +111,7 @@ ind
 mul
 equ
 and
-fjp L4
+fjp L15
 lda 0 0
 lda 0 0
 ind
@@ -114,20 +123,20 @@ div
 sub
 mul
 sto
-L4:
+L15:
 lda 0 6
 lda 0 6
 ind
 ldc 1
 add
 sto
-ujp L2
-L3:
+ujp L13
+L14:
 mst 0
 lda 0 5
 ind
 cup 1 p
-fjp L5
+fjp L16
 lda 0 0
 lda 0 0
 ind
@@ -139,7 +148,7 @@ div
 sub
 mul
 sto
-L5:
+L16:
 retf
 g_begin:
 lda 0 0
@@ -151,7 +160,7 @@ sto
 lda 0 6
 ldc 1
 sto
-L6:
+L17:
 lda 0 6
 ind
 lda 0 5
@@ -159,7 +168,7 @@ ind
 ldc 2
 div
 leq
-fjp L7
+fjp L18
 lda 0 5
 ind
 lda 0 5
@@ -171,7 +180,7 @@ lda 0 6
 ind
 mul
 equ
-fjp L8
+fjp L19
 lda 0 0
 lda 0 0
 ind
@@ -181,26 +190,26 @@ ind
 cup 1 f
 add
 sto
-L8:
+L19:
 lda 0 6
 lda 0 6
 ind
 ldc 1
 add
 sto
-ujp L6
-L7:
+ujp L17
+L18:
 retf
 h_begin:
 lda 0 5
 ldc 1
 sto
-L9:
+L20:
 lda 0 5
 ind
 ldc 13
 leq
-fjp L10
+fjp L21
 mst 0
 lda 0 5
 ind
@@ -212,6 +221,6 @@ ind
 ldc 1
 add
 sto
-ujp L9
-L10:
+ujp L20
+L21:
 stp

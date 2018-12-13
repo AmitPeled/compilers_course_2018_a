@@ -1,23 +1,25 @@
+DEBUG: after symbolTable
+DEBUG: after calaSep
 p:
 ssp 5
-sep 0
+sep 6
 ujp p_begin
 f:
 ssp 6
-sep 0
+sep 15
 ujp f_begin
 f_begin:
 lda 0 5
 ind
 ldc 2
 les
-fjp L0
+fjp L2
 lda 0 0
 lda 0 5
 ind
 sto
-ujp L1
-L0:
+ujp L3
+L2:
 lda 0 0
 mst 1
 lda 0 5
@@ -33,7 +35,7 @@ sub
 cup 1 f
 add
 sto
-L1:
+L3:
 retf
 p_begin:
 mst 0
