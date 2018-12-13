@@ -58,7 +58,9 @@ class homework2 {
     			sep = curr_ep > sep ? curr_ep : sep; // sep is maximum stack growth
     		}
     		else {
+    			
     			System.out.println(s);
+    			System.out.println("DEBUG: growth is " +growth);
     		}
     	}
     	private static void calcSep(AST ast) {
@@ -896,7 +898,7 @@ class homework2 {
     	if(statements.value.equals("multiply")){
     		coder(statements.left, nestingFunc);
     		coder(statements.right, nestingFunc);
-    		System.out.println("mul");
+    		sepAdjusted.print("mul", (-1));
     	}
     	if(statements.value.equals("divide")){
     		coder(statements.left, nestingFunc);
@@ -1006,7 +1008,7 @@ class homework2 {
 			//non-var parameters. may push data > 1 (records & arrays)
 			if(varParam.type.equals("array") || varParam.type.equals("record")) {
 				codel(argList.right, nestingFunc);
-				sepAdjusted.print("movs " + varParam.size, varParam.size); //maybe problem with sep
+				sepAdjusted.print("movs " + varParam.size, varParam.size - 1); //maybe problem with sep
 			}
 			else
 				coder(argList.right, nestingFunc);
@@ -1025,7 +1027,11 @@ class homework2 {
 		/*if(((VariableFunction)ToFunc).hasFuncPara) {
 			//sepAdjusted.print("cupi " +...
 		}
-		else*/ sepAdjusted.print("cup "+ ((VariableFunction)ToFunc).sizePara + " " + ToFunc.name, 0);
+		*/
+		if(((VariableFunction)ToFunc).ret_varName.equals("void")) {
+			sepAdjusted.print("cup "+ ((VariableFunction)ToFunc).sizePara + " " + ToFunc.name, -(((VariableFunction)ToFunc).sizePara + 5));
+		}
+		else sepAdjusted.print("cup "+ ((VariableFunction)ToFunc).sizePara + " " + ToFunc.name, -(((VariableFunction)ToFunc).sizePara + 4));
 	}
 	
     private static void code(AST statements, String nestingFunc) { // nestingFunc is the func that contains the code
@@ -1049,7 +1055,7 @@ class homework2 {
     	}
     	else if(currStatement.value.equals("print")) {
     		coder(currStatement.left, nestingFunc);
-    		sepAdjusted.print("print", 0);
+    		sepAdjusted.print("print", (-1));
     	}
     	else if(currStatement.value.equals("if")) {
     		if(currStatement.right.value.equals("else")) {
@@ -1069,7 +1075,7 @@ class homework2 {
     			int end_if_label = AST.LAB++;
     			
     			coder(currStatement.left, nestingFunc); //condition
-    			sepAdjusted.print("fjp L" + end_if_label, 0);
+    			sepAdjusted.print("fjp L" + end_if_label, (-1));
     			code(currStatement.right, nestingFunc);
     			sepAdjusted.print("L" + end_if_label + ":", 0);
     			
@@ -1083,7 +1089,7 @@ class homework2 {
     		
     		sepAdjusted.print("L" + currLab + ":", 0);
     		coder(currStatement.left, nestingFunc);
-    		sepAdjusted.print("fjp L" + end_while_label, 0);
+    		sepAdjusted.print("fjp L" + end_while_label, (-1));
     		code(currStatement.right, nestingFunc);
     		sepAdjusted.print("ujp L" + currLab, 0);
     		sepAdjusted.print("L" + end_while_label + ":", 0);
@@ -1098,7 +1104,7 @@ class homework2 {
     		int end_switch_label = AST.LAB++;
     		coder(currStatement.left, nestingFunc); //expression
     		sepAdjusted.print("neg", 0);
-    		sepAdjusted.print("ixj L"+end_switch_label, 0);
+    		sepAdjusted.print("ixj L"+end_switch_label, (-1));
     		
     		//2. find the deepest case (the first)
     		//and call the recursive function from there.
