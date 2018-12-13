@@ -116,8 +116,9 @@ class homework2 {
     		this.nd = nd;
     		this.nestingFunc = nestingFunc;
     	}
-    	public Variable(Variable other, int addrOrOffset, boolean isAttri, int nd, String nestingFunc) {
-    		this.name=other.name;
+    	public Variable(Variable other, String name, int addrOrOffset, boolean isAttri, boolean isByVar, 
+    			int nd, String nestingFunc) {
+    		this.name=name;
     		this.type=other.type;
     		if(!isAttri){
     			this.address = addrOrOffset;
@@ -127,10 +128,12 @@ class homework2 {
     			this.address = -1;
     			this.offset = addrOrOffset;
     		}
-    		
-    		this.size=other.size;
+    		if(!isByVar)
+    			this.size = other.size; //by value
+    		else
+    			this.size = 1; //by reference
     		this.isAttri = isAttri;
-    		this.isByVar = other.isByVar;
+    		this.isByVar = isByVar;
     		this.nd = nd;
     		this.nestingFunc = nestingFunc;
     	}
@@ -152,9 +155,9 @@ class homework2 {
     		super(name, type, addrOrOffset, size, isAttri, isByVar, nd, nestingFunc);
     		this.pointsTo = pointsTo;
     	}
-    	public VariablePointer(VariablePointer other, int addrOrOffset, boolean isAttri,
-    			int nd, String nestingFunc) {
-    		super(other, addrOrOffset, isAttri, nd, nestingFunc);
+    	public VariablePointer(VariablePointer other, String name, int addrOrOffset, boolean isAttri,
+    			boolean isByVar, int nd, String nestingFunc) {
+    		super(other, name, addrOrOffset, isAttri, isByVar, nd, nestingFunc);
     		this.pointsTo = other.pointsTo;
     	}
     	public String getPointsTo(){ return this.pointsTo; }
@@ -179,9 +182,9 @@ class homework2 {
     		this.subpart = calcSubpart(rangeList, dim - 1);
     	}
     	
-    	public VariableArray(VariableArray other, int addrOrOffset, boolean isAttri,
-    			int nd, String nestingFunc) {
-    		super(other, addrOrOffset, isAttri, nd, nestingFunc);
+    	public VariableArray(VariableArray other, String name, int addrOrOffset, boolean isAttri,
+    			boolean isByVar, int nd, String nestingFunc) {
+    		super(other, name, addrOrOffset, isAttri, isByVar, nd, nestingFunc);
     		this.g = other.g;
     		this.dim = other.dim;
     		this.d_size = new int[other.d_size.length];
@@ -236,10 +239,10 @@ class homework2 {
     		super(name, type, addrOrOffset, size, isAttri, isByVar, nd, nestingFunc);
     		this.attris = attris; //no need for deep copy
     	}
-    	public VariableRecord(VariableRecord other, int addrOrOffset, boolean isAttri,
-    			int nd, String nestingFunc) {
-    		super(other, addrOrOffset, isAttri, nd, nestingFunc);
-    		this.attris = attris; //no need for deep copy
+    	public VariableRecord(VariableRecord other, String name, int addrOrOffset, boolean isAttri,
+    			boolean isByVar, int nd, String nestingFunc) {
+    		super(other, name, addrOrOffset, isAttri, isByVar, nd, nestingFunc);
+    		this.attris = other.attris; //no need for deep copy
     	}
     	public String[] getAttris(){ return this.attris; }
     }
@@ -262,8 +265,29 @@ class homework2 {
     		this.paraArr = paraArr; //low copy - used only here
     		this.ret_varName = ret_varName;
     		this.sep = sep;
-    		this.sizePara = 0;
-    		Variable var;
+    		this.sizePara = 0; //will be set after params were defined
+    		
+    	}
+    	
+    	public VariableFunction(VariableFunction other, String name, int addrOrOffset, boolean isAttri,
+    			boolean isByVar, int nd, String SL_varName) {
+    		super(other, name, addrOrOffset, isAttri, isByVar, nd, SL_varName);
+    		this.isFunc = true;
+    		this.functionType = other.functionType;
+    		this.paraArr = other.paraArr; //I think it has to be low-copy
+    		this.ret_varName = other.ret_varName;
+    		this.sep = other.sep;
+    		this.sizePara = other.sizePara;
+    		
+    	}
+    	
+    	public void setRemainingAttrs(LinkedList<String> paramsNames, int size) {
+    		paraArr = new String[paramsNames.size()];
+        	for(int i=0; i<paraArr.length; i++) {
+        		paraArr[i] = paramsNames.get(i);
+        	}
+        	this.size = size;
+        	Variable var;
     		for(int i = 0; i < paraArr.length; i++) {
     			var = SymbolTable.varById(paraArr[i], this.name);
     			sizePara += var.size;
@@ -301,7 +325,7 @@ class homework2 {
             
             
             //printHashTable();
-            /*
+            
         	LinkedList<Variable> t;
         	for(int i = 0; i < hashTable.size(); i++) {
         		t = hashTable.elementAt(i);
@@ -320,7 +344,7 @@ class homework2 {
         			}
         		}
         	}
-        	*/
+        	
             return null;
         }
         
@@ -356,7 +380,7 @@ class homework2 {
         	boolean found = false;
         	for(int i = 0; i < t.size(); i++) {
         		var = t.get(i);
-        		if(var.name.equals(funcName) && var.type == "function") {
+        		if(var.name.equals(funcName) && var.type.equals("function")) {
         			found = true;
         			break;
         		}
@@ -389,6 +413,7 @@ class homework2 {
         	* so we call varById("c","g") and g is not defined.
         	* so currNestingFunc is null!
         	*/
+        	
         	boolean first = true;
         	LinkedList<Variable> t = hashTable.elementAt(hashFunction(id)); //get entry's linkedList
         	while(currNestingFunc != null || first) {
@@ -459,9 +484,24 @@ class homework2 {
         	if(scope == null) //no local-vars & nested funcs
         		noscope = true;
         	
+        	//***create function variable himself, and add to hashTable
+        	
+        	//paramsNames will be set after the constructor (after they're defined)
+        	//size will be set after the constructor (after they're defined)
+        	//don't forget: address=0
+        	int size = 0; //will be set after the creation of the parameters & locals
+        	String[] paraArr = null; //will be set after the creation of the parameters
+        	
+        	VariableFunction currFuncVar = new VariableFunction(currFuncName, type, 0, size, false,
+        			false, nd, SL_varName, functionType, paraArr, ret_varName, 0); //sep=0 for now
+        	int hash_entrance = hashFunction(currFuncName);
+            hashTable.elementAt(hash_entrance).addLast(currFuncVar);
+        	
+        	
+        	
         	
         	SymbolTable.ADR = 5; //adr reset. adr is relative to the current function
-        	//TODO: create parameters (parametersList)
+        	//***create parameters (parametersList)
         	LinkedList<String> paramsNames = new LinkedList<String>();
         	
         	int paramsSize;
@@ -472,7 +512,7 @@ class homework2 {
         	else
         		paramsSize = 0;
         	
-        	//create local vars
+        	//***create local vars
 
         	int localVarsSize; //size's of function var will be size of local variables
         	if(noscope == false)
@@ -481,22 +521,15 @@ class homework2 {
         		localVarsSize = 0;
         	
         	
-        	int size = localVarsSize + paramsSize;
+        	//***set size & paraArr
         	
-        	
-        	//create function variable himself, and add to hashTable
-        	//don't forget: address=0
+        	size = localVarsSize + paramsSize;
         	
         	//paramsNames: from LinkedList to array of strings
-        	String[] paraArr = new String[paramsNames.size()];
-        	for(int i=0; i<paraArr.length; i++) {
-        		paraArr[i] = paramsNames.get(i);
-        	}
+        	currFuncVar.setRemainingAttrs(paramsNames, size);
         	
-        	VariableFunction currFuncVar = new VariableFunction(currFuncName, type, 0, size, false,
-        			false, nd, SL_varName, functionType, paraArr, ret_varName, 0); //sep=0 for now
-        	int hash_entrance = hashFunction(currFuncName);
-            hashTable.elementAt(hash_entrance).addLast(currFuncVar);
+        	
+        	
         	
         	//TODO: add nested functions to Symbol Table - recursive call!
             if(noscope == false) {
@@ -525,7 +558,7 @@ class homework2 {
             String id,type;
             Variable var = null;
             
-            boolean isByVar = (declarations.right.value == "byReference"); //for parameters
+            boolean isByVar = (declarations.right.value.equals("byReference")); //for parameters
             
             
             id = declarations.right.left.left.value;
@@ -658,7 +691,6 @@ class homework2 {
             	
             	var = new VariablePointer(id, type, addrOrOffset, size, isAttri, isByVar, 
             			nd, nestingFunc, pointsTo);
-            	
             	if(isParam)
             		paramsNames.add(id);
             }
@@ -671,8 +703,36 @@ class homework2 {
             	
             	//(type).left.value
             	String copiedVarName = (declarations.right.right).left.value;
+            	if(!isAttri)
+            		addrOrOffset = ADR; //address
+            	else
+            		addrOrOffset = sumofSizesBefore; //offset
             	
-            	//copy constructor: (and then change the address)
+            	//using copy constructor:
+            	Variable copiedVar = varById(copiedVarName, nestingFunc); //find the copying var
+            	if(copiedVar instanceof VariablePointer) {
+            		VariablePointer vp = (VariablePointer)copiedVar;
+            		var = new VariablePointer(vp, id, addrOrOffset, isAttri, isByVar, nd, nestingFunc);
+            	}
+            	else if(copiedVar instanceof VariableArray) {
+            		VariableArray va = (VariableArray)copiedVar;
+            		var = new VariableArray(va, id, addrOrOffset, isAttri, isByVar, nd, nestingFunc);
+            	}
+            	else if(copiedVar instanceof VariableRecord) {
+            		VariableRecord vr = (VariableRecord)copiedVar;
+            		var = new VariableRecord(vr, id, addrOrOffset, isAttri, isByVar, nd, nestingFunc);
+            	}
+            	else if(copiedVar instanceof Variable) {
+            		var = new Variable(copiedVar, id, addrOrOffset, isAttri, isByVar, nd, nestingFunc);
+            	}
+            	else {
+            		System.out.println("Error: inputHandling: copiedVar is weird");
+            	}
+            	size = var.size;
+            	ADR += size;
+            	
+            	if(isParam)
+            		paramsNames.add(id);
             }
             else {
             	//primitives
@@ -761,9 +821,10 @@ class homework2 {
     				//add lda..
     			}
     		}
-    		else if(!var.isAttri) {
-    			//System.out.println("DEBUG: variable nd: " + var.nd + " function nd:" + currfunc.nd);
+    		else if(!var.isAttri) { //regular variable
     			sepAdjusted.print("lda "+ (currfunc.nd - var.nd + 1)+' '+ var.address, 1);
+    			if(var.isByVar) //if reference also add ind
+    				sepAdjusted.print("ind", 0);
     		}
     		else
     			sepAdjusted.print("inc " + var.offset, 0);
@@ -1012,10 +1073,11 @@ class homework2 {
     		int currLab = AST.LAB++;
     		int end_while_label = AST.LAB++;
     		AST.loopLabStack.add(end_while_label);
-
+    		
     		sepAdjusted.print("L" + currLab + ":", 0);
     		coder(currStatement.left, nestingFunc);
     		sepAdjusted.print("fjp L" + end_while_label, 0);
+    		code(currStatement.right, nestingFunc);
     		sepAdjusted.print("ujp L" + currLab, 0);
     		sepAdjusted.print("L" + end_while_label + ":", 0);
     		AST.loopLabStack.pop();
@@ -1097,7 +1159,7 @@ class homework2 {
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
 
 
-       // sepAdjusted.calcSep(ast);  /** insert inside generateSymbolTable  **/
+        sepAdjusted.calcSep(ast);  /** insert inside generateSymbolTable  **/
 
         generatePCode(ast, symbolTable);
     }
