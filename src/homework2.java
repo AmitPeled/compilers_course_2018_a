@@ -977,6 +977,7 @@ class homework2 {
     		sepAdjusted.print("L" + currLab + ":", 0);
     		coder(currStatement.left, nestingFunc);
     		sepAdjusted.print("fjp L" + end_while_label, 0);
+    		code(currStatement.right, nestingFunc);
     		sepAdjusted.print("ujp L" + currLab, 0);
     		sepAdjusted.print("L" + end_while_label + ":", 0);
     		AST.loopLabStack.pop();
@@ -1058,7 +1059,7 @@ class homework2 {
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
 
 
-       // sepAdjusted.calcSep(ast);  /** insert inside generateSymbolTable  **/
+        //sepAdjusted.calcSep(ast);  /** insert inside generateSymbolTable  **/
 
         generatePCode(ast, symbolTable);
     }

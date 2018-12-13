@@ -1,3 +1,9 @@
-mul
-mul
-mul
+p:
+ssp 9
+sep 0
+ujp p_begin
+f:
+ssp 8
+sep 0
+ujp f_begin
+f_begin:

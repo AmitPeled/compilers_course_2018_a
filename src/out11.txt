@@ -1,12 +1,10 @@
-p:
+P:
 ssp 11
-sep 0
-ujp p_begin
-f:
+ujp P_begin
+F:
 ssp 11
-sep 0
-ujp f_begin
-f_begin:
+ujp F_begin
+F_begin:
 lda 0 5
 ldc 5
 ixa 1
@@ -14,7 +12,7 @@ dec 0
 ind
 print
 retp
-p_begin:
+P_begin:
 lda 0 5
 ldc 6
 ixa 1
@@ -24,5 +22,5 @@ sto
 mst 0
 lda 0 5
 movs 6
-cup 6 f
+cup 6 F
 stp

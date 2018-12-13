@@ -1,12 +1,10 @@
-p:
+P:
 ssp 5
-sep 0
-ujp p_begin
-f:
+ujp P_begin
+F:
 ssp 6
-sep 0
-ujp f_begin
-f_begin:
+ujp F_begin
+F_begin:
 lda 0 5
 ind
 ldc 2
@@ -24,20 +22,20 @@ lda 0 5
 ind
 ldc 1
 sub
-cup 1 f
+cup 1 F
 mst 1
 lda 0 5
 ind
 ldc 2
 sub
-cup 1 f
+cup 1 F
 add
 sto
 L1:
 retf
-p_begin:
+P_begin:
 mst 0
 ldc 7
-cup 1 f
+cup 1 F
 print
 stp

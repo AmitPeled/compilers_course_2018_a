@@ -1,8 +1,7 @@
-a:
+A:
 ssp 7
-sep 0
-ujp a_begin
-a_begin:
+ujp A_begin
+A_begin:
 lda 0 5
 ldc 1
 sto
@@ -13,32 +12,32 @@ lda 0 5
 ind
 neg
 ixj L0
-L1:
+case_0_1:
 ldc 0
 print
 ujp L0
-L2:
+case_0_2:
 ldc 1
 print
 ujp L0
-L3:
+case_0_3:
 ldc 2
 print
 ldc 3
 print
 ujp L0
-ujp L3
-ujp L2
-ujp L1
+ujp case_0_3
+ujp case_0_2
+ujp case_0_1
 L0:
 lda 0 6
 ind
 neg
-ixj L4
-L5:
+ixj L1
+case_1_1:
 ldc 4
 print
-ujp L4
-ujp L5
-L4:
+ujp L1
+ujp case_1_1
+L1:
 stp

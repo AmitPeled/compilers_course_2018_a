@@ -1,8 +1,7 @@
-p:
+P:
 ssp 10
-sep 0
-ujp p_begin
-p_begin:
+ujp P_begin
+P_begin:
 lda 0 6
 inc 0
 ldc 6

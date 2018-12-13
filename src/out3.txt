@@ -1,8 +1,7 @@
-a:
+A:
 ssp 57
-sep 0
-ujp a_begin
-a_begin:
+ujp A_begin
+A_begin:
 lda 0 5
 ldc 10
 ixa 4
