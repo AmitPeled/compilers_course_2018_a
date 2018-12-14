@@ -1,0 +1,43 @@
+p:
+ssp 5
+sep 6
+ujp p_begin
+f:
+ssp 6
+sep 9
+ujp f_begin
+f_begin:
+lda 0 5
+ind
+ldc 2
+les
+fjp L2
+lda 0 0
+lda 0 5
+ind
+sto
+ujp L3
+L2:
+lda 0 0
+mst 1
+lda 0 5
+ind
+ldc 1
+sub
+cup 1 f
+mst 1
+lda 0 5
+ind
+ldc 2
+sub
+cup 1 f
+add
+sto
+L3:
+retf
+p_begin:
+mst 0
+ldc 7
+cup 1 f
+print
+stp

@@ -28,6 +28,6 @@ java homework2<tree10.txt>test_out10.txt
 java homework2<tree11.txt>test_out11.txt
 java homework2<tree12.txt>test_out12.txt
 java homework2<tree13.txt>test_out13.txt
-java homework2<tree13.txt>test_out14.txt
-java homework2<tree13.txt>test_out15.txt
-java homework2<tree13.txt>test_out16.txt
+java homework2<tree14.txt>test_out14.txt
+java homework2<tree15.txt>test_out15.txt
+java homework2<tree16.txt>test_out16.txt

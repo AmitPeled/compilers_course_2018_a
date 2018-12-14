@@ -1,0 +1,44 @@
+a:
+ssp 7
+sep 2
+ujp a_begin
+a_begin:
+lda 0 5
+ldc 1
+sto
+lda 0 6
+ldc 1
+sto
+lda 0 5
+ind
+neg
+ixj L6
+L7:
+ldc 0
+print
+ujp L6
+L8:
+ldc 1
+print
+ujp L6
+L9:
+ldc 2
+print
+ldc 3
+print
+ujp L6
+ujp L9
+ujp L8
+ujp L7
+L6:
+lda 0 6
+ind
+neg
+ixj L10
+L11:
+ldc 4
+print
+ujp L10
+ujp L11
+L10:
+stp

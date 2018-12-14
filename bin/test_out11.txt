@@ -1,0 +1,28 @@
+p:
+ssp 11
+sep 11
+ujp p_begin
+f:
+ssp 11
+sep 2
+ujp f_begin
+f_begin:
+lda 0 5
+ldc 5
+ixa 1
+dec 0
+ind
+print
+retp
+p_begin:
+lda 0 5
+ldc 6
+ixa 1
+dec 1
+ldc 12
+sto
+mst 0
+lda 0 5
+movs 6
+cup 6 f
+stp
