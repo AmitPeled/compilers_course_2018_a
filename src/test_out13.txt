@@ -1,5 +1,3 @@
-DEBUG: after symbolTable
-DEBUG: after calaSep
 h:
 ssp 6
 sep 6

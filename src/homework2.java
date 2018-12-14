@@ -1209,10 +1209,10 @@ class homework2 {
         AST ast = AST.createAST(scanner);
         ast.setFathers(null); //root has no father
         SymbolTable symbolTable = SymbolTable.generateSymbolTable(ast);
+
         
-        System.out.println("DEBUG: after symbolTable");
         sepAdjusted.calcSep(ast);  /** insert inside generateSymbolTable  **/
-        System.out.println("DEBUG: after calaSep");
+
         generatePCode(ast, symbolTable);
     }
 
